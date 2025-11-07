@@ -21,10 +21,25 @@ const LoginForm = ({ setUser }) => {
       return;
     }
 
+    // Verificar si es el admin
+    if (formData.email === "admin@levelupgamer.cl") {
+      const adminUser = {
+        email: "admin@levelupgamer.cl",
+        name: "Administrador",
+        referralCode: "ADMIN001",
+        isAdmin: true,
+      };
+      setUser(adminUser);
+      navigate("/admin");
+      return;
+    }
+
+    // Usuario normal
     const mockUser = {
       email: formData.email,
       name: "Usuario Demo",
       referralCode: "DEMO123456",
+      isAdmin: false,
     };
 
     setUser(mockUser);
@@ -34,6 +49,12 @@ const LoginForm = ({ setUser }) => {
   return (
     <Form onSubmit={handleSubmit} className="auth-form">
       {error && <Alert variant="danger">{error}</Alert>}
+
+      <Alert variant="info" className="mb-3">
+        <small>
+          <strong>Acceso Admin:</strong> admin@levelupgamer.cl
+        </small>
+      </Alert>
 
       <Form.Group className="mb-3">
         <Form.Label htmlFor="login-email">Email</Form.Label>

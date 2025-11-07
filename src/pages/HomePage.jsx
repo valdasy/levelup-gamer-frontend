@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import ProductCard from "../components/ProductCard/ProductCard";
 import FilterBar from "../components/FilterBar/FilterBar";
-import { PRODUCTS, CATEGORIES } from "../utils/constants";
+import { CATEGORIES } from "../utils/constants";
 import "./HomePage.css";
 
-const HomePage = ({ addToCart }) => {
+const HomePage = ({ products, addToCart }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -28,8 +28,6 @@ const HomePage = ({ addToCart }) => {
             <div className="shape shape-1"></div>
             <div className="shape shape-2"></div>
             <div className="shape shape-3"></div>
-            <div className="shape shape-4"></div>
-            <div className="shape shape-5"></div>
           </div>
         </div>
         <Container className="hero-content">

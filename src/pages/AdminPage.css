@@ -1,0 +1,46 @@
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.admin-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.admin-table-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.admin-table {
+  margin-bottom: 0;
+}
+
+.admin-table thead {
+  background-color: #f8f9fa;
+}
+
+.admin-table th {
+  color: #2c3e50;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.admin-table td {
+  vertical-align: middle;
+  color: #2c3e50;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f8f9fa;
+}

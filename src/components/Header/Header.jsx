@@ -28,9 +28,16 @@ const Header = ({ cartItemsCount, user }) => {
               )}
             </Nav.Link>
             {user ? (
-              <Nav.Link as={Link} to="/profile">
-                Perfil
-              </Nav.Link>
+              <>
+                <Nav.Link as={Link} to="/profile">
+                  Perfil
+                </Nav.Link>
+                {user.email === "admin@levelupgamer.cl" && (
+                  <Nav.Link as={Link} to="/admin">
+                    Admin
+                  </Nav.Link>
+                )}
+              </>
             ) : (
               <Nav.Link as={Link} to="/auth">
                 Ingresar

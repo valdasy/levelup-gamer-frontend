@@ -1,7 +1,16 @@
 .App {
   min-height: 100vh;
   background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
 }
+
+.main-content {
+  flex: 1;
+  min-height: calc(100vh - 200px);
+}
+
+/* Resto del código existente... */
 
 .auth-form .form-control,
 .auth-form .form-select {

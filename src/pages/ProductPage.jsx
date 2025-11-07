@@ -3,16 +3,16 @@ import { useParams } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
 import ProductCard from "../components/ProductCard/ProductCard";
 import FilterBar from "../components/FilterBar/FilterBar";
-import { PRODUCTS, CATEGORIES } from "../utils/constants";
+import { CATEGORIES } from "../utils/constants";
 
-const ProductPage = ({ addToCart }) => {
+const ProductPage = ({ products, addToCart }) => {
   const { category } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(
     category === "all" ? "all" : category
   );
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());

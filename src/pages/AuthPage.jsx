@@ -1,36 +1,42 @@
-import React, { useState } from "react";
-import { Container, Tab, Tabs } from "react-bootstrap";
-import RegisterForm from "../components/RegisterForm/RegisterForm";
-import LoginForm from "../components/LoginForm/LoginForm";
+// src/pages/AuthPage.jsx
+import { useState } from 'react';
+import { Container, Row, Col, Card, Tabs, Tab, Alert } from 'react-bootstrap';
+import LoginForm from '../components/LoginForm/LoginForm';
+import RegisterForm from '../components/RegisterForm/RegisterForm';
 
-const AuthPage = ({ setUser }) => {
-  const [key, setKey] = useState("login");
+export default function AuthPage({ onLogin }) {
+  const [message, setMessage] = useState(null);
+
+  const handleLogin = (userData) => {
+    onLogin?.(userData);
+    setMessage({ type: 'success', text: 'Sesión iniciada correctamente.' });
+  };
+
+  const handleRegister = (userData) => {
+    onLogin?.(userData);
+    setMessage({ type: 'success', text: 'Cuenta creada e inicio de sesión correcto.' });
+  };
 
   return (
-    <Container className="py-5">
-      <div className="auth-container mx-auto" style={{ maxWidth: "500px" }}>
-        <h2 className="text-center mb-4">LEVEL-UP GAMER</h2>
-
-        <Tabs
-          id="auth-tabs"
-          activeKey={key}
-          onSelect={(k) => setKey(k)}
-          className="mb-4"
-          fill
-        >
-          <Tab eventKey="login" title="Iniciar Sesión">
-            <LoginForm setUser={setUser} />
-          </Tab>
-          <Tab eventKey="register" title="Registrarse">
-            <RegisterForm
-              setUser={setUser}
-              switchToLogin={() => setKey("login")}
-            />
-          </Tab>
-        </Tabs>
-      </div>
+    <Container className="my-4">
+      <Row className="justify-content-center">
+        <Col md={6}>
+          <Card>
+            <Card.Body>
+              <h4 className="mb-3">Autenticación</h4>
+              {message && <Alert variant={message.type}>{message.text}</Alert>}
+              <Tabs defaultActiveKey="login" className="mb-3">
+                <Tab eventKey="login" title="Ingresar">
+                  <LoginForm onSuccess={handleLogin} />
+                </Tab>
+                <Tab eventKey="register" title="Registrarse">
+                  <RegisterForm onSuccess={handleRegister} />
+                </Tab>
+              </Tabs>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
-};
-
-export default AuthPage;
+}

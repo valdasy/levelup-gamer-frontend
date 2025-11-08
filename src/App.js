@@ -1,132 +1,220 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Header from "./components/Header/Header";
-import Footer from "./components/Footer/Footer";
-import HomePage from "./pages/HomePage";
-import ProductPage from "./pages/ProductPage";
-import ProductDetailPage from "./pages/ProductDetailPage";
-import CartPage from "./pages/CartPage";
-import ProfilePage from "./pages/ProfilePage";
-import AuthPage from "./pages/AuthPage";
-import AdminPage from "./pages/AdminPage";
-import { PRODUCTS } from "./utils/constants";
-import "./App.css";
+// src/App.js
+import { useMemo, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
+
+// Páginas
+import HomePage from './pages/HomePage';
+import ProductPage from './pages/ProductPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CartPage from './pages/CartPage';
+import ProfilePage from './pages/ProfilePage';
+import AuthPage from './pages/AuthPage';
+import AdminPage from './pages/AdminPage';
+import CheckoutPage from './pages/CheckoutPage';
+
+// Utils y datos
+import { PRODUCTS, CATEGORIES, DUOC_EMAIL_DOMAIN, DUOC_DISCOUNT } from './utils/constants';
+import { isDuocEmail } from './utils/validators';
 
 function App() {
+  // Estado global mínimo según el proyecto
   const [products, setProducts] = useState(PRODUCTS);
   const [cartItems, setCartItems] = useState([]);
   const [user, setUser] = useState(null);
 
+  // Helpers de carrito
   const addToCart = (product, quantity = 1) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+    setCartItems((prev) => {
+      const idx = prev.findIndex((it) => it.id === product.id);
+      if (idx !== -1) {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], quantity: copy[idx].quantity + quantity };
+        return copy;
       }
-      return [...prevItems, { ...product, quantity }];
+      return [...prev, { ...product, quantity }];
     });
   };
 
+  const updateQuantity = (productId, quantity) => {
+    setCartItems((prev) =>
+      prev
+        .map((it) => (it.id === productId ? { ...it, quantity } : it))
+        .filter((it) => it.quantity > 0)
+    );
+  };
+
   const removeFromCart = (productId) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== productId)
-    );
+    setCartItems((prev) => prev.filter((it) => it.id !== productId));
   };
 
-  const updateCartQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
+  const clearCart = () => setCartItems([]);
+
+  // Cálculo de totales con descuento DuocUC
+  const totals = useMemo(() => {
+    const subtotal = cartItems.reduce((acc, it) => acc + it.price * it.quantity, 0);
+    const hasDuoc = user?.email && isDuocEmail(user.email);
+    const discountRate = hasDuoc ? DUOC_DISCOUNT : 0;
+    const discount = Math.round(subtotal * discountRate);
+    const total = subtotal - discount;
+    return { subtotal, discount, total };
+  }, [cartItems, user]);
+
+  // Login/Logout básicos (AuthPage debe usarlos)
+  const handleLogin = (userData) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    clearCart();
+  };
+
+  // CRUD de productos (para AdminPage)
+  const handleCreateProduct = (newProduct) => {
+    setProducts((prev) => [...prev, { ...newProduct, id: Date.now() }]);
+  };
+
+  const handleUpdateProduct = (updated) => {
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  };
+
+  const handleDeleteProduct = (id) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setCartItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  // Handler principal de Checkout
+  const handlePlaceOrder = (payload) => {
+    // Opcional: simular persistencia de orden
+    // console.log('Orden creada:', payload);
+
+    // Guardar dirección en perfil si corresponde
+    if (payload.saveToProfile && user) {
+      const updatedUser = {
+        ...user,
+        name: payload.customer.name,
+        phone: payload.customer.phone,
+        address: payload.shippingAddress,
+      };
+      setUser(updatedUser);
     }
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
+
+    // Limpiar carrito
+    clearCart();
+    // Podrías disparar un toast de confirmación desde aquí si tienes un sistema de notificaciones
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-  };
-
-  const addProduct = (product) => {
-    setProducts((prevProducts) => [...prevProducts, product]);
-  };
-
-  const updateProduct = (updatedProduct) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === updatedProduct.id ? updatedProduct : product
-      )
-    );
-  };
-
-  const deleteProduct = (productId) => {
-    setProducts((prevProducts) =>
-      prevProducts.filter((product) => product.id !== productId)
-    );
-    removeFromCart(productId);
-  };
+  // Guards simples
+  const isAdmin = user?.isAdmin === true;
+  const RequireAdmin = ({ children }) => (isAdmin ? children : <Navigate to="/auth" replace />);
 
   return (
     <Router>
-      <div className="App">
-        <Header cartItemsCount={cartItems.length} user={user} />
-        <div className="main-content">
-          <Routes>
-            <Route
-              path="/"
-              element={<HomePage products={products} addToCart={addToCart} />}
-            />
-            <Route
-              path="/products/:category"
-              element={
-                <ProductPage products={products} addToCart={addToCart} />
-              }
-            />
-            <Route
-              path="/product/:productId"
-              element={
-                <ProductDetailPage products={products} addToCart={addToCart} />
-              }
-            />
-            <Route
-              path="/cart"
-              element={
-                <CartPage
-                  cartItems={cartItems}
-                  updateQuantity={updateCartQuantity}
-                  removeItem={removeFromCart}
-                  clearCart={clearCart}
-                  user={user}
-                />
-              }
-            />
-            <Route
-              path="/profile"
-              element={<ProfilePage user={user} setUser={setUser} />}
-            />
-            <Route path="/auth" element={<AuthPage setUser={setUser} />} />
-            <Route
-              path="/admin"
-              element={
+      <Header cartCount={cartItems.reduce((acc, it) => acc + it.quantity, 0)} user={user} onLogout={handleLogout} />
+
+      <main style={{ minHeight: '70vh' }}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <HomePage
+                products={products}
+                categories={CATEGORIES}
+                addToCart={addToCart}
+              />
+            }
+          />
+
+          <Route
+            path="/products/:category"
+            element={
+              <ProductPage
+                products={products}
+                addToCart={addToCart}
+              />
+            }
+          />
+
+          <Route
+            path="/product/:productId"
+            element={
+              <ProductDetailPage
+                products={products}
+                addToCart={addToCart}
+              />
+            }
+          />
+
+          <Route
+            path="/cart"
+            element={
+              <CartPage
+                cartItems={cartItems}
+                totals={totals}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+                clearCart={clearCart}
+                user={user}
+                duocEmailDomain={DUOC_EMAIL_DOMAIN}
+              />
+            }
+          />
+
+          {/* NUEVA RUTA: Checkout */}
+          <Route
+            path="/checkout"
+            element={
+              <CheckoutPage
+                cartItems={cartItems}
+                user={user}
+                onPlaceOrder={handlePlaceOrder}
+                totals={totals}
+              />
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProfilePage
+                user={user}
+                setUser={setUser}
+              />
+            }
+          />
+
+          <Route
+            path="/auth"
+            element={
+              <AuthPage
+                onLogin={handleLogin}
+              />
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <RequireAdmin>
                 <AdminPage
-                  user={user}
                   products={products}
-                  addProduct={addProduct}
-                  updateProduct={updateProduct}
-                  deleteProduct={deleteProduct}
+                  onCreate={handleCreateProduct}
+                  onUpdate={handleUpdateProduct}
+                  onDelete={handleDeleteProduct}
                 />
-              }
-            />
-          </Routes>
-        </div>
-        <Footer />
-      </div>
+              </RequireAdmin>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      <Footer />
     </Router>
   );
 }

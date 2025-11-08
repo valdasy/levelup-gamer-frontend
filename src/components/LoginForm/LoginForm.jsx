@@ -1,92 +1,67 @@
-import React, { useState } from "react";
-import { Form, Button, Alert } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { validateEmail } from "../../utils/validators";
+// src/components/LoginForm/LoginForm.jsx
+import { useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
+import { validateEmail } from '../../utils/validators';
 
-const LoginForm = ({ setUser }) => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+export default function LoginForm({ onSuccess }) {
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!validateEmail(form.email)) e.email = 'Email inválido';
+    if (!form.password) e.password = 'Contraseña requerida';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError("");
-
-    if (!validateEmail(formData.email)) {
-      setError("Email inválido");
-      return;
-    }
-
-    // Verificar si es el admin
-    if (formData.email === "admin@levelupgamer.cl") {
-      const adminUser = {
-        email: "admin@levelupgamer.cl",
-        name: "Administrador",
-        referralCode: "ADMIN001",
-        isAdmin: true,
-      };
-      setUser(adminUser);
-      navigate("/admin");
-      return;
-    }
-
-    // Usuario normal
-    const mockUser = {
-      email: formData.email,
-      name: "Usuario Demo",
-      referralCode: "DEMO123456",
-      isAdmin: false,
+    if (!validate()) return;
+    const user = {
+      name: form.email === 'admin@levelupgamer.cl' ? 'Admin' : 'Usuario',
+      email: form.email,
+      isAdmin: form.email === 'admin@levelupgamer.cl',
     };
-
-    setUser(mockUser);
-    navigate("/");
+    onSuccess?.(user);
   };
 
   return (
-    <Form onSubmit={handleSubmit} className="auth-form">
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      <Alert variant="info" className="mb-3">
-        <small>
-          <strong>Acceso Admin:</strong> admin@levelupgamer.cl
-        </small>
-      </Alert>
-
+    <Form onSubmit={handleSubmit} noValidate>
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="login-email">Email</Form.Label>
+        <Form.Label>Email</Form.Label>
         <Form.Control
-          id="login-email"
           type="email"
           name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          placeholder="tu@email.com"
+          value={form.email}
+          onChange={onChange}
+          isInvalid={!!errors.email}
+          placeholder="tu@correo.com"
         />
+        <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="login-password">Contraseña</Form.Label>
+        <Form.Label>Contraseña</Form.Label>
         <Form.Control
-          id="login-password"
           type="password"
           name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          placeholder="••••••"
+          value={form.password}
+          onChange={onChange}
+          isInvalid={!!errors.password}
+          placeholder="********"
         />
+        <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
       </Form.Group>
 
-      <Button variant="success" type="submit" className="w-100">
-        Iniciar Sesión
-      </Button>
+      <div className="d-grid">
+        <Button type="submit" variant="primary">Ingresar</Button>
+      </div>
     </Form>
   );
-};
-
-export default LoginForm;
+}

@@ -1,147 +1,101 @@
-import React, { useState } from "react";
-import { Form, Button, Alert } from "react-bootstrap";
-import {
-  validateEmail,
-  isOver18,
-  validatePassword,
-} from "../../utils/validators";
+// src/components/RegisterForm/RegisterForm.jsx
+import { useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
+import { validateEmail, isOver18, validatePassword } from '../../utils/validators';
 
-const RegisterForm = ({ setUser, switchToLogin }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    birthDate: "",
-    password: "",
-    confirmPassword: "",
+export default function RegisterForm({ onSuccess }) {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    birthDate: '',
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = 'Nombre requerido';
+    if (!validateEmail(form.email)) e.email = 'Email inválido';
+    if (!validatePassword(form.password)) e.password = 'Contraseña inválida';
+    if (!isOver18(form.birthDate)) e.birthDate = 'Debes ser mayor de 18 años';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    if (!validateEmail(formData.email)) {
-      setError("Email inválido");
-      return;
-    }
-
-    if (!isOver18(formData.birthDate)) {
-      setError("Debes ser mayor de 18 años");
-      return;
-    }
-
-    if (!validatePassword(formData.password)) {
-      setError("La contraseña debe tener al menos 6 caracteres");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
-
-    const referralCode =
-      "LUG" + Math.random().toString(36).substring(2, 8).toUpperCase();
-
+    if (!validate()) return;
     const newUser = {
-      name: formData.name,
-      email: formData.email,
-      birthDate: formData.birthDate,
-      referralCode: referralCode,
+      name: form.name,
+      email: form.email,
+      isAdmin: form.email === 'admin@levelupgamer.cl',
+      // campos opcionales que se completarán luego
+      phone: '',
+      address: null,
     };
-
-    setUser(newUser);
-    setSuccess(true);
-
-    setTimeout(() => {
-      switchToLogin();
-    }, 2000);
+    onSuccess?.(newUser); // NOTA: no usar setUser directo aquí
   };
 
   return (
-    <Form onSubmit={handleSubmit} className="auth-form">
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && (
-        <Alert variant="success">¡Registro exitoso! Redirigiendo...</Alert>
-      )}
-
+    <Form onSubmit={handleSubmit} noValidate>
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="register-name">Nombre Completo</Form.Label>
+        <Form.Label>Nombre completo</Form.Label>
         <Form.Control
-          id="register-name"
-          type="text"
           name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
+          value={form.name}
+          onChange={onChange}
+          isInvalid={!!errors.name}
+          placeholder="Ej: Juan Pérez"
         />
+        <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="register-email">Email</Form.Label>
+        <Form.Label>Email</Form.Label>
         <Form.Control
-          id="register-email"
           type="email"
           name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          placeholder="tu@email.com"
+          value={form.email}
+          onChange={onChange}
+          isInvalid={!!errors.email}
+          placeholder="tu@correo.com"
         />
+        <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="register-birthdate">
-          Fecha de Nacimiento
-        </Form.Label>
+        <Form.Label>Contraseña</Form.Label>
         <Form.Control
-          id="register-birthdate"
-          type="date"
-          name="birthDate"
-          value={formData.birthDate}
-          onChange={handleChange}
-          required
-        />
-      </Form.Group>
-
-      <Form.Group className="mb-3">
-        <Form.Label htmlFor="register-password">Contraseña</Form.Label>
-        <Form.Control
-          id="register-password"
           type="password"
           name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          placeholder="Mínimo 6 caracteres"
+          value={form.password}
+          onChange={onChange}
+          isInvalid={!!errors.password}
+          placeholder="********"
         />
+        <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="register-confirm-password">
-          Confirmar Contraseña
-        </Form.Label>
+        <Form.Label>Fecha de nacimiento</Form.Label>
         <Form.Control
-          id="register-confirm-password"
-          type="password"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          required
+          type="date"
+          name="birthDate"
+          value={form.birthDate}
+          onChange={onChange}
+          isInvalid={!!errors.birthDate}
         />
+        <Form.Control.Feedback type="invalid">{errors.birthDate}</Form.Control.Feedback>
       </Form.Group>
 
-      <Button variant="success" type="submit" className="w-100">
-        Registrarse
-      </Button>
+      <div className="d-grid">
+        <Button type="submit" variant="primary">Crear cuenta</Button>
+      </div>
     </Form>
   );
-};
-
-export default RegisterForm;
+}

@@ -1,6 +1,7 @@
 // src/pages/ProfilePage.jsx
 import { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { validateEmail } from '../utils/validators';
 
 export default function ProfilePage({ user, setUser }) {
@@ -228,8 +229,13 @@ export default function ProfilePage({ user, setUser }) {
           <Card>
             <Card.Body>
               <h5>Tu cuenta</h5>
-              <div className="text-muted small">
+              <div className="text-muted small mb-3">
                 Actualiza tus datos y dirección para autocompletar en el checkout.
+              </div>
+              <div className="d-grid">
+                <Button as={Link} to="/orders" variant="primary">
+                  Mis boletas
+                </Button>
               </div>
             </Card.Body>
           </Card>

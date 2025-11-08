@@ -1,5 +1,5 @@
 // src/App.js
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -16,17 +16,35 @@ import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
 import CheckoutPage from './pages/CheckoutPage';
 
-// Utils y datos
+// Páginas de órdenes/boletas
+import OrderSuccessPage from './pages/OrderSuccessPage';
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+
+// Datos y utils
 import { PRODUCTS, CATEGORIES, DUOC_EMAIL_DOMAIN, DUOC_DISCOUNT } from './utils/constants';
 import { isDuocEmail } from './utils/validators';
 
 function App() {
-  // Estado global mínimo según el proyecto
+  // Estado global
   const [products, setProducts] = useState(PRODUCTS);
   const [cartItems, setCartItems] = useState([]);
   const [user, setUser] = useState(null);
 
-  // Helpers de carrito
+  // Órdenes (persistencia local)
+  const [orders, setOrders] = useState(() => {
+    try {
+      const raw = localStorage.getItem('orders');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem('orders', JSON.stringify(orders));
+  }, [orders]);
+
+  // Carrito
   const addToCart = (product, quantity = 1) => {
     setCartItems((prev) => {
       const idx = prev.findIndex((it) => it.id === product.id);
@@ -53,7 +71,7 @@ function App() {
 
   const clearCart = () => setCartItems([]);
 
-  // Cálculo de totales con descuento DuocUC
+  // Totales
   const totals = useMemo(() => {
     const subtotal = cartItems.reduce((acc, it) => acc + it.price * it.quantity, 0);
     const hasDuoc = user?.email && isDuocEmail(user.email);
@@ -63,36 +81,45 @@ function App() {
     return { subtotal, discount, total };
   }, [cartItems, user]);
 
-  // Login/Logout básicos (AuthPage debe usarlos)
-  const handleLogin = (userData) => {
-    setUser(userData);
-  };
-
+  // Auth
+  const handleLogin = (userData) => setUser(userData);
   const handleLogout = () => {
     setUser(null);
     clearCart();
   };
 
-  // CRUD de productos (para AdminPage)
+  // Admin CRUD
   const handleCreateProduct = (newProduct) => {
     setProducts((prev) => [...prev, { ...newProduct, id: Date.now() }]);
   };
-
   const handleUpdateProduct = (updated) => {
     setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   };
-
   const handleDeleteProduct = (id) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setCartItems((prev) => prev.filter((it) => it.id !== id));
   };
 
-  // Handler principal de Checkout
-  const handlePlaceOrder = (payload) => {
-    // Opcional: simular persistencia de orden
-    // console.log('Orden creada:', payload);
+  // Órdenes
+  const generateOrderNumber = () => 'LUG-' + Date.now().toString().slice(-8);
 
-    // Guardar dirección en perfil si corresponde
+  const handlePlaceOrder = (payload, navigate) => {
+    const orderNumber = generateOrderNumber();
+    const createdAt = new Date().toISOString();
+    const order = {
+      id: orderNumber,
+      createdAt,
+      userEmail: user?.email || payload.customer.email,
+      customer: payload.customer,
+      shippingAddress: payload.shippingAddress,
+      items: payload.cartItems,
+      totals: payload.totals,
+    };
+
+    // Persistir antes de navegar
+    setOrders((prev) => [order, ...prev]);
+
+    // Actualizar perfil si corresponde
     if (payload.saveToProfile && user) {
       const updatedUser = {
         ...user,
@@ -103,18 +130,26 @@ function App() {
       setUser(updatedUser);
     }
 
-    // Limpiar carrito
-    clearCart();
-    // Podrías disparar un toast de confirmación desde aquí si tienes un sistema de notificaciones
+    // 1) Navegar primero a éxito
+    navigate(`/orders/success/${orderNumber}`);
+
+    // 2) Limpiar carrito después para no gatillar el guard de Checkout
+    setTimeout(() => {
+      clearCart();
+    }, 0);
   };
 
-  // Guards simples
+  // Guard de admin
   const isAdmin = user?.isAdmin === true;
   const RequireAdmin = ({ children }) => (isAdmin ? children : <Navigate to="/auth" replace />);
 
   return (
     <Router>
-      <Header cartCount={cartItems.reduce((acc, it) => acc + it.quantity, 0)} user={user} onLogout={handleLogout} />
+      <Header
+        cartItemsCount={cartItems.reduce((acc, it) => acc + it.quantity, 0)}
+        user={user}
+        onLogout={handleLogout}
+      />
 
       <main style={{ minHeight: '70vh' }}>
         <Routes>
@@ -131,22 +166,12 @@ function App() {
 
           <Route
             path="/products/:category"
-            element={
-              <ProductPage
-                products={products}
-                addToCart={addToCart}
-              />
-            }
+            element={<ProductPage products={products} addToCart={addToCart} />}
           />
 
           <Route
             path="/product/:productId"
-            element={
-              <ProductDetailPage
-                products={products}
-                addToCart={addToCart}
-              />
-            }
+            element={<ProductDetailPage products={products} addToCart={addToCart} />}
           />
 
           <Route
@@ -164,36 +189,31 @@ function App() {
             }
           />
 
-          {/* NUEVA RUTA: Checkout */}
           <Route
             path="/checkout"
             element={
               <CheckoutPage
                 cartItems={cartItems}
                 user={user}
-                onPlaceOrder={handlePlaceOrder}
                 totals={totals}
+                onPlaceOrder={(payload, navigate) => handlePlaceOrder(payload, navigate)}
               />
             }
           />
 
+          {/* Órdenes / Boletas */}
+          <Route path="/orders" element={<OrdersPage orders={orders} user={user} />} />
+          <Route path="/orders/success/:orderId" element={<OrderSuccessPage orders={orders} />} />
+          <Route path="/orders/:orderId" element={<OrderDetailPage orders={orders} />} />
+
           <Route
             path="/profile"
-            element={
-              <ProfilePage
-                user={user}
-                setUser={setUser}
-              />
-            }
+            element={<ProfilePage user={user} setUser={setUser} />}
           />
 
           <Route
             path="/auth"
-            element={
-              <AuthPage
-                onLogin={handleLogin}
-              />
-            }
+            element={<AuthPage onLogin={handleLogin} />}
           />
 
           <Route

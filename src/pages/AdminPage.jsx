@@ -24,21 +24,6 @@ const AdminPage = ({
     discount: "",
   });
 
-  // Verificar si el usuario es admin
-  if (!user || user.email !== "admin@levelupgamer.cl") {
-    return (
-      <Container className="py-5 text-center">
-        <Alert variant="danger">
-          <h4>Acceso Denegado</h4>
-          <p>No tienes permisos para acceder a esta página.</p>
-          <Button variant="primary" onClick={() => navigate("/")}>
-            Volver al Inicio
-          </Button>
-        </Alert>
-      </Container>
-    );
-  }
-
   const handleShowModal = (product = null) => {
     if (product) {
       setEditingProduct(product);

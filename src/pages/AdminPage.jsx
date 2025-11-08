@@ -1,236 +1,190 @@
-import React, { useState } from "react";
-import { Container, Button, Table, Modal, Form, Alert } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import "./AdminPage.css";
+// src/pages/AdminPage.jsx
+import { useMemo } from 'react';
+import { Container, Row, Col, Card, Button, ListGroup, Badge } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 
-const AdminPage = ({
-  user,
-  products,
-  addProduct,
-  updateProduct,
-  deleteProduct,
-}) => {
+export default function AdminPage({ products, onCreate, onUpdate, onDelete }) {
   const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [formData, setFormData] = useState({
-    id: "",
-    code: "",
-    name: "",
-    category: "",
-    price: "",
-    description: "",
-    image: "",
-    discount: "",
-  });
 
-  const handleShowModal = (product = null) => {
-    if (product) {
-      setEditingProduct(product);
-      setFormData(product);
-    } else {
-      setEditingProduct(null);
-      setFormData({
-        id: "PROD" + Date.now(),
-        code: "PROD" + Date.now(),
-        name: "",
-        category: "",
-        price: "",
-        description: "",
-        image: "",
-        discount: "",
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingProduct(null);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "price" || name === "discount"
-          ? parseFloat(value) || 0
-          : value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (editingProduct) {
-      updateProduct(formData);
-    } else {
-      addProduct(formData);
-    }
-
-    handleCloseModal();
-  };
-
-  const handleDelete = (productId) => {
-    if (window.confirm("¿Estás seguro de eliminar este producto?")) {
-      deleteProduct(productId);
-    }
-  };
+  // KPIs de ejemplo (ajústalos a tu backend si corresponde)
+  const kpis = useMemo(() => {
+    const totalProductos = products?.length || 0;
+    const inventario = products?.reduce((acc, p) => acc + (p.stock || 0), 0);
+    const comprasHoy = 1234; // simulado
+    const usuariosMes = 890;  // simulado
+    return { totalProductos, inventario, comprasHoy, usuariosMes };
+  }, [products]);
 
   return (
-    <Container className="py-5">
-      <div className="admin-header mb-4">
-        <h2>Panel de Administración</h2>
-        <Button variant="success" onClick={() => handleShowModal()}>
-          Agregar Producto
-        </Button>
-      </div>
+    <div className="d-flex" style={{ minHeight: 'calc(100vh - 120px)' }}>
+      {/* Sidebar */}
+      <aside style={{ width: 260 }} className="border-end bg-light">
+        <ListGroup variant="flush" className="rounded-0">
+          <ListGroup.Item action as={Link} to="/admin" active>
+            Dashboard
+          </ListGroup.Item>
+          <ListGroup.Item action as={Link} to="/orders">Órdenes</ListGroup.Item>
+          <ListGroup.Item action as={Link} to="/admin/products">Productos</ListGroup.Item>
+          <ListGroup.Item action as={Link} to="/admin/categories">Categorías</ListGroup.Item>
+          <ListGroup.Item action as={Link} to="/admin/users">Usuarios</ListGroup.Item>
+          <ListGroup.Item action as={Link} to="/admin/reports">Reportes</ListGroup.Item>
+          <ListGroup.Item action as={Link} to="/profile">Perfil</ListGroup.Item>
+          <div className="p-3">
+            <Button as={Link} to="/" variant="dark" className="w-100 mb-2">Tienda</Button>
+            <Button variant="danger" className="w-100" onClick={() => navigate('/auth')}>
+              Cerrar Sesión
+            </Button>
+          </div>
+        </ListGroup>
+      </aside>
 
-      <div className="admin-table-container">
-        <Table responsive hover className="admin-table">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Descuento</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id}>
-                <td>{product.code}</td>
-                <td>{product.name}</td>
-                <td>{product.category}</td>
-                <td>${product.price.toLocaleString("es-CL")}</td>
-                <td>{product.discount ? `${product.discount}%` : "-"}</td>
-                <td>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleShowModal(product)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleDelete(product.id)}
-                  >
-                    Eliminar
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+      {/* Contenido */}
+      <main className="flex-grow-1">
+        <Container fluid className="py-3">
+          <h4 className="mb-1">Dashboard</h4>
+          <div className="text-muted mb-3">Resumen de las actividades diarias</div>
 
-      <Modal show={showModal} onHide={handleCloseModal} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {editingProduct ? "Editar Producto" : "Agregar Nuevo Producto"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Código</Form.Label>
-              <Form.Control
-                type="text"
-                name="code"
-                value={formData.code}
-                onChange={handleChange}
-                required
-                disabled={!!editingProduct}
-              />
-            </Form.Group>
+          {/* KPIs superiores */}
+          <Row className="g-3 mb-3">
+            <Col md={4}>
+              <Card className="h-100 text-white" style={{ background: '#1976d2' }}>
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="fw-semibold">Compras</div>
+                      <div style={{ fontSize: 28, lineHeight: 1.1 }}>{kpis.comprasHoy.toLocaleString()}</div>
+                      <small className="opacity-75">Probabilidad de aumento: 20%</small>
+                    </div>
+                    <div style={{ fontSize: 36 }}>🛒</div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4}>
+              <Card className="h-100 text-white" style={{ background: '#2e7d32' }}>
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="fw-semibold">Productos</div>
+                      <div style={{ fontSize: 28, lineHeight: 1.1 }}>{kpis.totalProductos}</div>
+                      <small className="opacity-75">Inventario actual: {kpis.inventario}</small>
+                    </div>
+                    <div style={{ fontSize: 36 }}>📦</div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4}>
+              <Card className="h-100 text-dark" style={{ background: '#ffd54f' }}>
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="fw-semibold">Usuarios</div>
+                      <div style={{ fontSize: 28, lineHeight: 1.1 }}>{kpis.usuariosMes}</div>
+                      <small className="opacity-75">Nuevos este mes: 120</small>
+                    </div>
+                    <div style={{ fontSize: 36 }}>👥</div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Nombre del Producto</Form.Label>
-              <Form.Control
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+          {/* Mosaico de accesos */}
+          <Row className="g-3">
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>📊</div>
+                  <h5 className="mt-2">Dashboard</h5>
+                  <div className="text-muted small mb-3">Visión general de métricas y estadísticas.</div>
+                  <Button as={Link} to="/admin" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Categoría</Form.Label>
-              <Form.Control
-                type="text"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>🧾</div>
+                  <h5 className="mt-2">Órdenes</h5>
+                  <div className="text-muted small mb-3">Gestión y seguimiento de compras.</div>
+                  <Button as={Link} to="/orders" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Precio (CLP)</Form.Label>
-              <Form.Control
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>📦</div>
+                  <h5 className="mt-2">Productos</h5>
+                  <div className="text-muted small mb-2">Inventario y detalles.</div>
+                  <div className="mb-3">
+                    <Badge bg="secondary">{kpis.totalProductos} items</Badge>
+                  </div>
+                  <Button as={Link} to="/admin/products" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Descuento (%)</Form.Label>
-              <Form.Control
-                type="number"
-                name="discount"
-                value={formData.discount}
-                onChange={handleChange}
-                min="0"
-                max="100"
-              />
-            </Form.Group>
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>🗂️</div>
+                  <h5 className="mt-2">Categorías</h5>
+                  <div className="text-muted small mb-3">Organiza productos por categoría.</div>
+                  <Button as={Link} to="/admin/categories" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Descripción</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>👥</div>
+                  <h5 className="mt-2">Usuarios</h5>
+                  <div className="text-muted small mb-3">Cuentas y roles.</div>
+                  <Button as={Link} to="/admin/users" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
 
-            <Form.Group className="mb-3">
-              <Form.Label>URL de Imagen</Form.Label>
-              <Form.Control
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="https://ejemplo.com/imagen.jpg"
-              />
-            </Form.Group>
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>📈</div>
+                  <h5 className="mt-2">Reportes</h5>
+                  <div className="text-muted small mb-3">Informes detallados.</div>
+                  <Button as={Link} to="/admin/reports" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
 
-            <div className="d-flex justify-content-end gap-2">
-              <Button variant="secondary" onClick={handleCloseModal}>
-                Cancelar
-              </Button>
-              <Button variant="success" type="submit">
-                {editingProduct ? "Actualizar" : "Crear"} Producto
-              </Button>
-            </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
-    </Container>
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>👤</div>
+                  <h5 className="mt-2">Perfil</h5>
+                  <div className="text-muted small mb-3">Datos personales y cuenta.</div>
+                  <Button as={Link} to="/profile" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={6} lg={3}>
+              <Card className="h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: 26 }}>🏬</div>
+                  <h5 className="mt-2">Tienda</h5>
+                  <div className="text-muted small mb-3">Ver sitio en tiempo real.</div>
+                  <Button as={Link} to="/" variant="outline-primary" size="sm">Abrir</Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </main>
+    </div>
   );
-};
-
-export default AdminPage;
+}

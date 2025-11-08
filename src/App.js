@@ -13,8 +13,8 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthPage from './pages/AuthPage';
-import AdminPage from './pages/AdminPage';
 import CheckoutPage from './pages/CheckoutPage';
+import AdminRoutes from './pages/AdminRoutes';
 
 // Páginas de órdenes/boletas
 import OrderSuccessPage from './pages/OrderSuccessPage';
@@ -216,19 +216,19 @@ function App() {
             element={<AuthPage onLogin={handleLogin} />}
           />
 
-          <Route
-            path="/admin"
-            element={
-              <RequireAdmin>
-                <AdminPage
-                  products={products}
-                  onCreate={handleCreateProduct}
-                  onUpdate={handleUpdateProduct}
-                  onDelete={handleDeleteProduct}
-                />
-              </RequireAdmin>
-            }
-          />
+        <Route
+          path="/admin/*"
+          element={
+            <RequireAdmin>
+              <AdminRoutes
+                products={products}
+                onCreate={handleCreateProduct}
+                onUpdate={handleUpdateProduct}
+                onDelete={handleDeleteProduct}
+              />
+            </RequireAdmin>
+          }
+        />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

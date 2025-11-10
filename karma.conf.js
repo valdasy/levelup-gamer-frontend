@@ -1,12 +1,3 @@
-// Configurar la ruta de Brave
-const path = require("path");
-const bravePath =
-  process.platform === "win32"
-    ? "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-    : "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser";
-
-process.env.CHROME_BIN = bravePath;
-
 module.exports = function (config) {
   config.set({
     basePath: "",
@@ -48,13 +39,16 @@ module.exports = function (config) {
     reporters: ["progress", "coverage"],
     coverageReporter: {
       dir: "coverage-karma/",
-      reporters: [{ type: "html", subdir: "html" }, { type: "text-summary" }],
+      reporters: [
+        { type: "html", subdir: "html" }, 
+        { type: "text-summary" }
+      ],
     },
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: false,
-    browsers: ["Chrome"], // Brave es compatible con Chrome launcher
+    browsers: ["Chrome"],
     singleRun: true,
     concurrency: Infinity,
   });

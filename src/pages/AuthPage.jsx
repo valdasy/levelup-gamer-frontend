@@ -1,24 +1,23 @@
-// src/pages/AuthPage.jsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ← AGREGAR ESTO
-import { Container, Row, Col, Card, Tabs, Tab, Alert } from "react-bootstrap";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm/LoginForm";
 import RegisterForm from "../components/RegisterForm/RegisterForm";
+import './AuthPage.css';
 
 export default function AuthPage({ onLogin }) {
   const [message, setMessage] = useState(null);
-  const navigate = useNavigate(); // ← AGREGAR ESTO
+  const [activeTab, setActiveTab] = useState('login');
+  const navigate = useNavigate();
 
   const handleLogin = (userData) => {
     onLogin?.(userData);
     setMessage({ type: "success", text: "Sesión iniciada correctamente." });
 
-    // ✅ AGREGAR ESTO: Redirigir después del login
     setTimeout(() => {
-      if (userData.isAdmin) {
-        navigate("/admin"); // Si es admin, ir a admin
+      if (userData.roles?.includes('ADMIN')) {
+        navigate("/admin");
       } else {
-        navigate("/"); // Si es usuario normal, ir a home
+        navigate("/home");
       }
     }, 500);
   };
@@ -30,32 +29,68 @@ export default function AuthPage({ onLogin }) {
       text: "Cuenta creada e inicio de sesión correcto.",
     });
 
-    // ✅ AGREGAR ESTO: Redirigir después del registro
     setTimeout(() => {
-      navigate("/");
+      navigate("/home");
     }, 500);
   };
 
   return (
-    <Container className="my-4">
-      <Row className="justify-content-center">
-        <Col md={6}>
-          <Card>
-            <Card.Body>
-              <h4 className="mb-3">Autenticación</h4>
-              {message && <Alert variant={message.type}>{message.text}</Alert>}
-              <Tabs defaultActiveKey="login" className="mb-3">
-                <Tab eventKey="login" title="Ingresar">
-                  <LoginForm onSuccess={handleLogin} />
-                </Tab>
-                <Tab eventKey="register" title="Registrarse">
-                  <RegisterForm onSuccess={handleRegister} />
-                </Tab>
-              </Tabs>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          {/* Logo o título */}
+          <div className="auth-header">
+            <h1>Level UP Gamer</h1>
+            <p>Tu tienda gaming favorita</p>
+          </div>
+
+          {/* Mensajes de éxito/error */}
+          {message && (
+            <div className={`alert alert-${message.type}`}>
+              {message.text}
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div className="auth-tabs">
+            <button
+              className={`tab-button ${activeTab === 'login' ? 'active' : ''}`}
+              onClick={() => setActiveTab('login')}
+            >
+              Iniciar Sesión
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'register' ? 'active' : ''}`}
+              onClick={() => setActiveTab('register')}
+            >
+              Registrarse
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="auth-content">
+            {activeTab === 'login' ? (
+              <LoginForm onSuccess={handleLogin} />
+            ) : (
+              <RegisterForm onSuccess={handleRegister} />
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="auth-footer">
+            <p>
+              ¿Olvidaste tu contraseña? <a href="/reset-password">Recupérala aquí</a>
+            </p>
+          </div>
+        </div>
+
+        {/* Decoración lateral */}
+        <div className="auth-decoration">
+          <div className="decoration-circle circle-1"></div>
+          <div className="decoration-circle circle-2"></div>
+          <div className="decoration-circle circle-3"></div>
+        </div>
+      </div>
+    </div>
   );
 }

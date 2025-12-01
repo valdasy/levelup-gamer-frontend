@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import { CarritoProvider } from './context/CarritoContext';
 import authService from './services/authService';
 
 // Pages
@@ -21,7 +22,6 @@ import AdminRoutes from './pages/AdminRoutes';
 import './App.css';
 
 function App() {
-  // Función para redireccionar si ya está autenticado
   const RedirectIfAuthenticated = ({ children }) => {
     const isAuthenticated = authService.isAuthenticated();
     
@@ -34,142 +34,115 @@ function App() {
 
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          {/* Ruta raíz - redirige según autenticación */}
-          <Route 
-            path="/" 
-            element={
-              authService.isAuthenticated() 
-                ? <Navigate to="/home" replace /> 
-                : <Navigate to="/auth" replace />
-            } 
-          />
+      <CarritoProvider>
+        <div className="App">
+          <Routes>
+            {/* Ruta raíz - ir al home sin forzar login */}
+            <Route path="/" element={<Navigate to="/home" replace />} />
 
-          {/* Rutas públicas */}
-          <Route 
-            path="/auth" 
-            element={
-              <RedirectIfAuthenticated>
-                <AuthPage />
-              </RedirectIfAuthenticated>
-            } 
-          />
+            {/* Auth - solo si NO está autenticado */}
+            <Route 
+              path="/auth" 
+              element={
+                <RedirectIfAuthenticated>
+                  <AuthPage />
+                </RedirectIfAuthenticated>
+              } 
+            />
 
-          {/* Rutas protegidas (requieren login) */}
-          <Route 
-            path="/home" 
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Rutas PÚBLICAS - no requieren login */}
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/products" element={<ProductPage />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
 
-          <Route 
-            path="/products" 
-            element={
-              <ProtectedRoute>
-                <ProductPage />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Rutas PROTEGIDAS - requieren login */}
+            <Route 
+              path="/cart" 
+              element={
+                <ProtectedRoute>
+                  <CartPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/product/:id" 
-            element={
-              <ProtectedRoute>
-                <ProductDetailPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/checkout" 
+              element={
+                <ProtectedRoute>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/cart" 
-            element={
-              <ProtectedRoute>
-                <CartPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/order-success" 
+              element={
+                <ProtectedRoute>
+                  <OrderSuccessPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/checkout" 
-            element={
-              <ProtectedRoute>
-                <CheckoutPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/orders" 
+              element={
+                <ProtectedRoute>
+                  <OrdersPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/order-success" 
-            element={
-              <ProtectedRoute>
-                <OrderSuccessPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/order/:id" 
+              element={
+                <ProtectedRoute>
+                  <OrderDetailPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/orders" 
-            element={
-              <ProtectedRoute>
-                <OrdersPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/order/:id" 
-            element={
-              <ProtectedRoute>
-                <OrderDetailPage />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Rutas de ADMIN - requieren login + rol ADMIN */}
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/admin/products" 
+              element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminProductsPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Rutas de administrador (requieren rol ADMIN) */}
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AdminPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/admin/routes" 
+              element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminRoutes />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/admin/products" 
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AdminProductsPage />
-              </ProtectedRoute>
-            } 
-          />
-
-          <Route 
-            path="/admin/routes" 
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AdminRoutes />
-              </ProtectedRoute>
-            } 
-          />
-
-          {/* Ruta 404 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+            {/* 404 */}
+            <Route path="*" element={<Navigate to="/home" replace />} />
+          </Routes>
+        </div>
+      </CarritoProvider>
     </Router>
   );
 }

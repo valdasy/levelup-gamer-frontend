@@ -1,163 +1,184 @@
-// src/pages/CartPage.jsx
-import { useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Container, Row, Col, Card, Button, Form, ListGroup, Image } from 'react-bootstrap';
-import { isDuocEmail } from '../utils/validators';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header/Header';
+import Footer from '../components/Footer/Footer';
+import { useCarrito } from '../context/CarritoContext';
+import './CartPage.css';
 
-export default function CartPage({
-  cartItems,
-  totals,                 // { subtotal, discount, total } calculado en App
-  updateQuantity,          // (productId, quantity)
-  removeFromCart,          // (productId)
-  clearCart,               // ()
-  user,
-  duocEmailDomain          // p.ej. '@duocuc.cl' desde constants para mensajes
-}) {
+const CartPage = () => {
   const navigate = useNavigate();
-  const hasItems = cartItems && cartItems.length > 0;
+  const { 
+    carrito, 
+    loading, 
+    cargarCarrito, 
+    actualizarCantidad, 
+    eliminarItem, 
+    vaciarCarrito 
+  } = useCarrito();
 
-  const summary = useMemo(() => {
-    if (totals) return totals;
-    const subtotal = cartItems?.reduce((acc, it) => acc + it.price * it.quantity, 0) || 0;
-    const duoc = user?.email && isDuocEmail(user.email) ? 0.2 : 0;
-    const discount = Math.round(subtotal * duoc);
-    const total = subtotal - discount;
-    return { subtotal, discount, total };
-  }, [cartItems, totals, user]);
+  useEffect(() => {
+    cargarCarrito();
+  }, []);
 
-  const handleQtyChange = (id, value) => {
-    const q = Number(value);
-    if (Number.isNaN(q) || q < 0) return;
-    updateQuantity(id, q);
+  const handleCantidadChange = async (itemId, nuevaCantidad) => {
+    if (nuevaCantidad < 1) return;
+    
+    try {
+      await actualizarCantidad(itemId, nuevaCantidad);
+    } catch (error) {
+      alert('Error al actualizar cantidad: ' + error.message);
+    }
   };
 
+  const handleEliminarItem = async (itemId) => {
+    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
+      try {
+        await eliminarItem(itemId);
+      } catch (error) {
+        alert('Error al eliminar item: ' + error.message);
+      }
+    }
+  };
+
+  const handleVaciarCarrito = async () => {
+    if (window.confirm('¿Estás seguro de vaciar el carrito?')) {
+      try {
+        await vaciarCarrito();
+      } catch (error) {
+        alert('Error al vaciar carrito: ' + error.message);
+      }
+    }
+  };
+
+  const handleCheckout = () => {
+    navigate('/checkout');
+  };
+
+  if (loading) {
+    return (
+      <div className="cart-page">
+        <Header />
+        <main className="cart-main">
+          <div className="loading">Cargando carrito...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isEmpty = !carrito || !carrito.items || carrito.items.length === 0;
+
   return (
-    <Container className="my-4">
-      <h3 className="mb-3">Tu carrito</h3>
+    <div className="cart-page">
+      <Header />
+      
+      <main className="cart-main">
+        <h1>Mi Carrito</h1>
 
-      {!hasItems && (
-        <Card className="p-4 text-center">
-          <p className="mb-3">Tu carrito está vacío.</p>
-          <Button as={Link} to="/" variant="primary">Seguir comprando</Button>
-        </Card>
-      )}
+        {isEmpty ? (
+          <div className="cart-empty">
+            <p>Tu carrito está vacío</p>
+            <button onClick={() => navigate('/products')} className="btn-seguir-comprando">
+              Ir a productos
+            </button>
+          </div>
+        ) : (
+          <div className="cart-content">
+            <div className="cart-items">
+              <div className="cart-header">
+                <h2>Productos ({carrito.items.length})</h2>
+                <button onClick={handleVaciarCarrito} className="btn-vaciar">
+                  Vaciar carrito
+                </button>
+              </div>
 
-      {hasItems && (
-        <Row className="g-4">
-          <Col md={8}>
-            <Card>
-              <Card.Body>
-                <ListGroup variant="flush">
-                  {cartItems.map((item) => (
-                    <ListGroup.Item key={item.id} className="py-3">
-                      <Row className="align-items-center g-2">
-                        <Col xs={3} md={2}>
-                          {item.image ? (
-                            <Image src={item.image} alt={item.name} fluid rounded />
-                          ) : (
-                            <div style={{
-                              width: '100%', aspectRatio: '1/1', background: '#F8F9FA',
-                              border: '1px solid #E0E0E0', borderRadius: 8
-                            }} />
-                          )}
-                        </Col>
-                        <Col xs={9} md={4}>
-                          <div className="fw-semibold">{item.name}</div>
-                          <div className="text-muted small">{item.category}</div>
-                          <div className="mt-1">${item.price.toLocaleString()}</div>
-                        </Col>
-                        <Col xs={6} md={3}>
-                          <Form.Label className="small mb-1">Cantidad</Form.Label>
-                          <Form.Control
-                            type="number"
-                            min={0}
-                            value={item.quantity}
-                            onChange={(e) => handleQtyChange(item.id, e.target.value)}
-                          />
-                          <div className="small text-muted mt-1">
-                            Subtotal: ${(item.price * item.quantity).toLocaleString()}
-                          </div>
-                        </Col>
-                        <Col xs={6} md={3} className="text-end">
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => removeFromCart(item.id)}
-                          >
-                            Eliminar
-                          </Button>
-                        </Col>
-                      </Row>
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
-
-                <div className="d-flex justify-content-between mt-3">
-                  <Button variant="outline-secondary" onClick={clearCart}>
-                    Vaciar carrito
-                  </Button>
-                  <Button as={Link} to="/" variant="secondary">
-                    Seguir comprando
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col md={4}>
-            <Card>
-              <Card.Body>
-                <h5 className="mb-3">Resumen</h5>
-
-                <div className="d-flex justify-content-between">
-                  <span>Subtotal</span>
-                  <span>${summary.subtotal.toLocaleString()}</span>
-                </div>
-
-                {summary.discount > 0 && (
-                  <div className="d-flex justify-content-between text-success mt-1">
-                    <span>Descuento DuocUC</span>
-                    <span>- ${summary.discount.toLocaleString()}</span>
+              {carrito.items.map((item) => (
+                <div key={item.id} className="cart-item">
+                  <img 
+                    src={item.producto.imagenUrl || '/placeholder.png'} 
+                    alt={item.producto.nombre}
+                    onError={(e) => e.target.src = '/placeholder.png'}
+                  />
+                  
+                  <div className="item-info">
+                    <h3>{item.producto.nombre}</h3>
+                    <p className="item-categoria">{item.producto.categoria.nombre}</p>
+                    <p className="item-precio">
+                      ${item.precioUnitario.toLocaleString('es-CL')} c/u
+                    </p>
                   </div>
-                )}
 
-                <hr />
+                  <div className="item-cantidad">
+                    <button 
+                      onClick={() => handleCantidadChange(item.id, item.cantidad - 1)}
+                      disabled={item.cantidad <= 1}
+                    >
+                      -
+                    </button>
+                    <span>{item.cantidad}</span>
+                    <button 
+                      onClick={() => handleCantidadChange(item.id, item.cantidad + 1)}
+                      disabled={item.cantidad >= item.producto.stock}
+                    >
+                      +
+                    </button>
+                  </div>
 
-                <div className="d-flex justify-content-between fw-semibold">
-                  <span>Total</span>
-                  <span>${summary.total.toLocaleString()}</span>
-                </div>
+                  <div className="item-subtotal">
+                    <p className="subtotal-label">Subtotal:</p>
+                    <p className="subtotal-precio">
+                      ${item.subtotal.toLocaleString('es-CL')}
+                    </p>
+                  </div>
 
-                <small className="text-muted d-block mt-2">
-                  {user?.email && isDuocEmail(user.email)
-                    ? 'Se aplicó 20% de descuento por email @duocuc.cl'
-                    : `Inicia sesión con correo ${duocEmailDomain || '@duocuc.cl'} para 20% de descuento`}
-                </small>
-
-                <div className="d-grid mt-3">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    disabled={!hasItems}
-                    onClick={() => navigate('/checkout')}
+                  <button 
+                    onClick={() => handleEliminarItem(item.id)}
+                    className="btn-eliminar"
                   >
-                    Ir a pagar
-                  </Button>
+                    ✕
+                  </button>
                 </div>
+              ))}
+            </div>
 
-                <div className="d-grid mt-2">
-                  <Button
-                    variant="outline-primary"
-                    onClick={() => navigate('/')}
-                  >
-                    Agregar más productos
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
-    </Container>
+            <div className="cart-summary">
+              <h2>Resumen del pedido</h2>
+              
+              <div className="summary-row">
+                <span>Subtotal:</span>
+                <span>${carrito.total.toLocaleString('es-CL')}</span>
+              </div>
+
+              <div className="summary-row">
+                <span>Envío:</span>
+                <span>A calcular</span>
+              </div>
+
+              <div className="summary-divider"></div>
+
+              <div className="summary-row summary-total">
+                <span>Total:</span>
+                <span>${carrito.total.toLocaleString('es-CL')}</span>
+              </div>
+
+              <button onClick={handleCheckout} className="btn-checkout">
+                Proceder al pago
+              </button>
+
+              <button 
+                onClick={() => navigate('/products')} 
+                className="btn-seguir-comprando"
+              >
+                Seguir comprando
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <Footer />
+    </div>
   );
-}
+};
+
+export default CartPage;

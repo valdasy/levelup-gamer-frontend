@@ -4,6 +4,7 @@ import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import productoService from '../services/productoService';
 import categoriaService from '../services/categoriaService';
+import { useCarrito } from '../context/CarritoContext';
 import './ProductPage.css';
 
 const ProductPage = () => {
@@ -12,6 +13,7 @@ const ProductPage = () => {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { agregarProducto } = useCarrito();
 
   useEffect(() => {
     cargarDatos();
@@ -55,6 +57,15 @@ const ProductPage = () => {
     }
   };
 
+  const handleAgregarAlCarrito = async (productoId) => {
+    try {
+      await agregarProducto(productoId, 1);
+      alert('Producto agregado al carrito');
+    } catch (error) {
+      alert('Error al agregar al carrito: ' + error.message);
+    }
+  };
+
   return (
     <div className="product-page">
       <Header />
@@ -62,7 +73,6 @@ const ProductPage = () => {
       <main className="product-main">
         <h1>Catálogo de Productos</h1>
 
-        {/* Filtro de categorías */}
         <div className="categorias-filter">
           <button 
             className={categoriaSeleccionada === null ? 'active' : ''}
@@ -84,7 +94,6 @@ const ProductPage = () => {
         {loading && <div className="loading">Cargando productos...</div>}
         {error && <div className="error">{error}</div>}
 
-        {/* Grid de productos */}
         {!loading && !error && (
           <div className="productos-grid">
             {productos.length === 0 ? (
@@ -110,7 +119,13 @@ const ProductPage = () => {
                   <Link to={`/product/${producto.id}`} className="btn-ver-mas">
                     Ver detalles
                   </Link>
-                  <button className="btn-agregar">Agregar al carrito</button>
+                  <button 
+                    className="btn-agregar"
+                    onClick={() => handleAgregarAlCarrito(producto.id)}
+                    disabled={producto.stock === 0}
+                  >
+                    {producto.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+                  </button>
                 </div>
               ))
             )}

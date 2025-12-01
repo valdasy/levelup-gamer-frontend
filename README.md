@@ -46,13 +46,9 @@ Level Up Gamer es una aplicación web full-stack que permite a los usuarios nave
 git clone https://github.com/valdasy/levelup-gamer-frontend.git
 cd levelup-gamer-frontend
 
-text
-
 ### 2. Instalar dependencias
 
 npm install
-
-text
 
 ### 3. Configurar variables de entorno (opcional)
 
@@ -60,13 +56,9 @@ Crear archivo `.env` en la raíz:
 
 REACT_APP_API_URL=http://localhost:8081
 
-text
-
 ### 4. Ejecutar en modo desarrollo
 
 npm start
-
-text
 
 La aplicación estará disponible en: `http://localhost:3000`
 
@@ -74,34 +66,30 @@ La aplicación estará disponible en: `http://localhost:3000`
 
 npm run build
 
-text
-
 ## 🏗️ Estructura del Proyecto
 
 src/
-├── components/ # Componentes reutilizables
-│ ├── Header/ # Navegación principal
-│ ├── Footer/ # Pie de página
-│ ├── LoginForm/ # Formulario de login
-│ └── RegisterForm/ # Formulario de registro
-├── pages/ # Páginas principales
-│ ├── HomePage.jsx # Landing page
-│ ├── AuthPage.jsx # Login/Registro
-│ ├── ProductsPage.jsx # Catálogo
-│ ├── CartPage.jsx # Carrito
-│ ├── AdminPage.jsx # Dashboard admin
-│ └── AdminProductsPage.jsx # Gestión productos
-├── services/ # Servicios de API
-│ ├── authService.js # Autenticación JWT
-│ ├── productoService.js # Productos CRUD
-│ ├── categoriaService.js # Categorías
-│ └── carritoService.js # Carrito
-├── context/ # Context API
-│ └── CarritoContext.jsx # Estado global carrito
-├── App.js # Configuración de rutas
-└── index.js # Punto de entrada
-
-text
+├── components/          # Componentes reutilizables
+│   ├── Header/         # Navegación principal
+│   ├── Footer/         # Pie de página
+│   ├── LoginForm/      # Formulario de login
+│   └── RegisterForm/   # Formulario de registro
+├── pages/              # Páginas principales
+│   ├── HomePage.jsx    # Landing page
+│   ├── AuthPage.jsx    # Login/Registro
+│   ├── ProductsPage.jsx # Catálogo
+│   ├── CartPage.jsx    # Carrito
+│   ├── AdminPage.jsx   # Dashboard admin
+│   └── AdminProductsPage.jsx # Gestión productos
+├── services/           # Servicios de API
+│   ├── authService.js  # Autenticación JWT
+│   ├── productoService.js # Productos CRUD
+│   ├── categoriaService.js # Categorías
+│   └── carritoService.js # Carrito
+├── context/            # Context API
+│   └── CarritoContext.jsx # Estado global carrito
+├── App.js             # Configuración de rutas
+└── index.js           # Punto de entrada
 
 ## 🔐 Autenticación y Autorización
 
@@ -116,67 +104,54 @@ El sistema utiliza tokens JWT para autenticación:
 - **ADMIN**: Acceso adicional al panel de administración
 
 ### Rutas Protegidas
-<ProtectedRoute requiredRole="ADMIN"> <AdminPage /> </ProtectedRoute> ```
-📡 Integración con Backend
-Endpoints Principales
-Autenticación:
+<ProtectedRoute requiredRole="ADMIN">
+  <AdminPage />
+</ProtectedRoute>
 
-POST /api/auth/login - Iniciar sesión
+## 📡 Integración con Backend
 
-POST /api/auth/register - Registrar usuario
+### Endpoints Principales
 
-Productos:
+**Autenticación:**
+- `POST /api/auth/login` - Iniciar sesión
+- `POST /api/auth/register` - Registrar usuario
 
-GET /api/productos/activos - Listar productos
+**Productos:**
+- `GET /api/productos/activos` - Listar productos
+- `GET /api/productos/{id}` - Detalle producto
+- `POST /api/productos` - Crear producto (Admin)
+- `PUT /api/productos/{id}` - Actualizar producto (Admin)
+- `DELETE /api/productos/{id}` - Eliminar producto (Admin)
 
-GET /api/productos/{id} - Detalle producto
+**Carrito:**
+- `GET /api/carrito` - Obtener carrito del usuario
+- `POST /api/carrito/agregar` - Agregar producto
+- `PUT /api/carrito/actualizar` - Actualizar cantidad
+- `DELETE /api/carrito/{id}` - Eliminar item
 
-POST /api/productos - Crear producto (Admin)
+**Categorías:**
+- `GET /api/categorias/activas` - Listar categorías
 
-PUT /api/productos/{id} - Actualizar producto (Admin)
+## 🎨 Características de Diseño
 
-DELETE /api/productos/{id} - Eliminar producto (Admin)
+### Paleta de Colores
+- Primary: `#667eea` → `#764ba2` (Gradiente morado)
+- Success: `#43e97b`
+- Warning: `#ffc107`
+- Danger: `#dc3545`
 
-Carrito:
+### Animaciones
+- Fade In/Out
+- Slide Up
+- Hover Effects
+- Loading Spinners
 
-GET /api/carrito - Obtener carrito del usuario
+### Responsividad
+- Mobile First
+- Breakpoints: 480px, 768px, 1024px, 1400px
 
-POST /api/carrito/agregar - Agregar producto
+## 🧪 Testing
 
-PUT /api/carrito/actualizar - Actualizar cantidad
-
-DELETE /api/carrito/{id} - Eliminar item
-
-Categorías:
-
-GET /api/categorias/activas - Listar categorías
-
-🎨 Características de Diseño
-Paleta de Colores
-Primary: #667eea → #764ba2 (Gradiente morado)
-
-Success: #43e97b
-
-Warning: #ffc107
-
-Danger: #dc3545
-
-Animaciones
-Fade In/Out
-
-Slide Up
-
-Hover Effects
-
-Loading Spinners
-
-Responsividad
-Mobile First
-
-Breakpoints: 480px, 768px, 1024px, 1400px
-
-🧪 Testing
-text
 # Ejecutar tests
 npm test
 
@@ -185,36 +160,29 @@ npm run test:coverage
 
 # Tests con Karma/Jasmine
 npm run test:karma:single
-📸 Capturas de Pantalla
-Homepage
-Hero section con gradiente
 
-Productos destacados
+## 📸 Capturas de Pantalla
 
-Categorías rápidas
+### Homepage
+- Hero section con gradiente
+- Productos destacados
+- Categorías rápidas
+- Features section
 
-Features section
+### Panel Admin
+- Dashboard con estadísticas
+- Sidebar de navegación
+- Gestión CRUD de productos
+- Modal para crear/editar
 
-Panel Admin
-Dashboard con estadísticas
+### Carrito
+- Lista de productos
+- Actualización de cantidades
+- Cálculo automático de totales
+- Botón de checkout
 
-Sidebar de navegación
+## 🚀 Scripts Disponibles
 
-Gestión CRUD de productos
-
-Modal para crear/editar
-
-Carrito
-Lista de productos
-
-Actualización de cantidades
-
-Cálculo automático de totales
-
-Botón de checkout
-
-🚀 Scripts Disponibles
-text
 # Desarrollo
 npm start              # Servidor desarrollo (puerto 3000)
 npm run build          # Build de producción
@@ -226,46 +194,51 @@ npm run test:karma    # Tests Karma/Jasmine
 
 # Otros
 npm run eject         # Exponer configuración CRA
-🔒 Seguridad Implementada
-✅ Autenticación JWT con roles
 
-✅ Rutas protegidas por rol
+## 🔒 Seguridad Implementada
 
-✅ Validación de tokens en cada request
+- ✅ Autenticación JWT con roles
+- ✅ Rutas protegidas por rol
+- ✅ Validación de tokens en cada request
+- ✅ Gestión segura de sesión
+- ✅ Logout con limpieza de datos
+- ✅ Restricciones de acceso en frontend y backend
 
-✅ Gestión segura de sesión
+## 🐛 Solución de Problemas
 
-✅ Logout con limpieza de datos
+### Error 401 - No autorizado
+- Verificar que el token JWT esté en localStorage
+- Hacer logout y login nuevamente
 
-✅ Restricciones de acceso en frontend y backend
+### Error 404 - Endpoint no encontrado
+- Verificar que el backend esté corriendo en puerto 8081
+- Revisar CORS en el backend
 
-🐛 Solución de Problemas
-Error 401 - No autorizado
-Verificar que el token JWT esté en localStorage
+### Productos no cargan
+- Verificar conexión con MySQL
+- Revisar que haya productos activos en la BD
 
-Hacer logout y login nuevamente
+## 📝 Notas de Desarrollo
 
-Error 404 - Endpoint no encontrado
-Verificar que el backend esté corriendo en puerto 8081
+- El modo DEMO permite probar sin base de datos conectada
+- Los datos mock están disponibles para desarrollo
+- El token expira después de 24 horas
 
-Revisar CORS en el backend
+## 👨‍💻 Autor
 
-Productos no cargan
-Verificar conexión con MySQL
-
-Revisar que haya productos activos en la BD
-
-📝 Notas de Desarrollo
-El modo DEMO permite probar sin base de datos conectada
-
-Los datos mock están disponibles para desarrollo
-
-El token expira después de 24 horas
-
-👨‍💻 Autor
-Proyecto Académico - Evaluación Parcial 3
-Asignatura: DSY1104 - Desarrollo FullStack II
+**Proyecto Académico** - Evaluación Parcial 3  
+Asignatura: DSY1104 - Desarrollo FullStack II  
 Institución: DuocUC
 
-📄 Licencia
+## 📄 Licencia
+
 Este proyecto es de uso académico.
+
+## 🔗 Enlaces Relacionados
+
+- [Backend Repository](https://github.com/valdasy/levelup-gamer-backend)
+- [Documentación API](http://localhost:8081/swagger-ui.html)
+
+---
+
+⭐ **Desarrollado con React y Spring Boot** ⭐

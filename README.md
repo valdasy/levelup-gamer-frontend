@@ -1,193 +1,271 @@
-Claro, aquí está tu README actualizado con la sección completa de pruebas unitarias:
+# 🎮 LEVEL UP GAMER - Frontend
 
----
+Plataforma e-commerce gaming desarrollada con React, integrada con backend Spring Boot para la Evaluación Parcial 3 de Desarrollo FullStack II.
 
-# LEVEL-UP GAMER
+## 📋 Descripción del Proyecto
 
-Tienda online de productos gaming desarrollada con React y Bootstrap para la evaluación parcial 2 de Desarrollo FullStack II.
+Level Up Gamer es una aplicación web full-stack que permite a los usuarios navegar por un catálogo de productos gaming, gestionar su carrito de compras, realizar pedidos y administrar productos (panel admin). El sistema incluye autenticación JWT, gestión de roles y persistencia de sesión.
 
-## Descripción del Proyecto
+## ✨ Características Principales
 
-Level-Up Gamer es una aplicación web que permite a los usuarios navegar por un catálogo de productos gaming, agregar productos al carrito de compras, registrarse como usuarios y gestionar su perfil. El proyecto incluye validaciones para usuarios mayores de 18 años y descuentos automáticos del 20% para correos institucionales de DuocUC.
+### Para Usuarios
+- 🛍️ Catálogo de productos con filtros y búsqueda
+- 🛒 Carrito de compras persistente con backend
+- 👤 Sistema de registro y login con JWT
+- 🔐 Gestión de sesión con persistencia en localStorage
+- 📱 Diseño responsivo y moderno
+- 💳 Proceso de checkout integrado
 
-## Características Principales
+### Para Administradores
+- 📊 Dashboard con estadísticas en tiempo real
+- ➕ Crear, editar y eliminar productos
+- 📁 Gestión de categorías
+- 👥 Administración de usuarios
+- 🎯 Panel de control intuitivo con sidebar
 
-- Catálogo de productos con filtros por categoría y búsqueda
-- Carrito de compras con actualización de cantidades
-- Sistema de registro y login de usuarios
-- Validación de edad (mayores de 18 años)
-- Descuento automático del 20% para correos @duocuc.cl
-- Código de referido único por usuario
-- Diseño responsivo adaptado a diferentes dispositivos
-- Interfaz minimalista con animaciones suaves
+## 🚀 Tecnologías Utilizadas
 
-## Tecnologías Utilizadas
+- **React 18** - Framework principal
+- **React Router DOM** - Navegación y rutas protegidas
+- **Context API** - Gestión de estado global (Carrito)
+- **Axios** - Cliente HTTP para API REST
+- **CSS3** - Estilos modernos con gradientes y animaciones
+- **JWT** - Autenticación y autorización
+- **LocalStorage** - Persistencia de sesión
 
-- React 18
-- React Router DOM
-- Bootstrap 5
-- React-Bootstrap
-- CSS3 con diseño responsivo
-- Jest y React Testing Library para pruebas unitarias
-- Karma y Jasmine para testing de funciones JavaScript
+## 📦 Requisitos Previos
 
-## Requisitos Previos
+- Node.js (versión 16 o superior)
+- npm (versión 8 o superior)
+- Backend Spring Boot corriendo en `http://localhost:8081`
 
-- Node.js (versión 14 o superior)
-- npm (versión 6 o superior)
+## 🔧 Instalación y Ejecución
 
-## Instalación y Ejecución
+### 1. Clonar el repositorio
 
-1. Clonar el repositorio:
-```bash
-git clone https://github.com/vichinho/levelup-gamer-frontend
+git clone https://github.com/valdasy/levelup-gamer-frontend.git
 cd levelup-gamer-frontend
-```
 
-2. Instalar dependencias:
-```bash
+text
+
+### 2. Instalar dependencias
+
 npm install
-```
 
-3. Ejecutar el proyecto en modo desarrollo:
-```bash
+text
+
+### 3. Configurar variables de entorno (opcional)
+
+Crear archivo `.env` en la raíz:
+
+REACT_APP_API_URL=http://localhost:8081
+
+text
+
+### 4. Ejecutar en modo desarrollo
+
 npm start
-```
 
-4. Abrir en el navegador:
-```
-http://localhost:3000
-```
+text
 
-## Pruebas Unitarias
+La aplicación estará disponible en: `http://localhost:3000`
 
-El proyecto cuenta con **35 pruebas unitarias** implementadas utilizando dos frameworks de testing: Jest y Karma/Jasmine.
+### 5. Generar build de producción
 
-### Ejecutar Pruebas con Jest
+npm run build
 
-Para ejecutar las pruebas de componentes React con Jest y React Testing Library:
+text
 
-```bash
-# Ejecutar tests en modo watch
+## 🏗️ Estructura del Proyecto
+
+src/
+├── components/ # Componentes reutilizables
+│ ├── Header/ # Navegación principal
+│ ├── Footer/ # Pie de página
+│ ├── LoginForm/ # Formulario de login
+│ └── RegisterForm/ # Formulario de registro
+├── pages/ # Páginas principales
+│ ├── HomePage.jsx # Landing page
+│ ├── AuthPage.jsx # Login/Registro
+│ ├── ProductsPage.jsx # Catálogo
+│ ├── CartPage.jsx # Carrito
+│ ├── AdminPage.jsx # Dashboard admin
+│ └── AdminProductsPage.jsx # Gestión productos
+├── services/ # Servicios de API
+│ ├── authService.js # Autenticación JWT
+│ ├── productoService.js # Productos CRUD
+│ ├── categoriaService.js # Categorías
+│ └── carritoService.js # Carrito
+├── context/ # Context API
+│ └── CarritoContext.jsx # Estado global carrito
+├── App.js # Configuración de rutas
+└── index.js # Punto de entrada
+
+text
+
+## 🔐 Autenticación y Autorización
+
+### JWT Token
+El sistema utiliza tokens JWT para autenticación:
+- Token almacenado en `localStorage`
+- Enviado en header `Authorization: Bearer {token}`
+- Renovación automática en cada request
+
+### Roles de Usuario
+- **USER**: Acceso a catálogo, carrito y checkout
+- **ADMIN**: Acceso adicional al panel de administración
+
+### Rutas Protegidas
+<ProtectedRoute requiredRole="ADMIN"> <AdminPage /> </ProtectedRoute> ```
+📡 Integración con Backend
+Endpoints Principales
+Autenticación:
+
+POST /api/auth/login - Iniciar sesión
+
+POST /api/auth/register - Registrar usuario
+
+Productos:
+
+GET /api/productos/activos - Listar productos
+
+GET /api/productos/{id} - Detalle producto
+
+POST /api/productos - Crear producto (Admin)
+
+PUT /api/productos/{id} - Actualizar producto (Admin)
+
+DELETE /api/productos/{id} - Eliminar producto (Admin)
+
+Carrito:
+
+GET /api/carrito - Obtener carrito del usuario
+
+POST /api/carrito/agregar - Agregar producto
+
+PUT /api/carrito/actualizar - Actualizar cantidad
+
+DELETE /api/carrito/{id} - Eliminar item
+
+Categorías:
+
+GET /api/categorias/activas - Listar categorías
+
+🎨 Características de Diseño
+Paleta de Colores
+Primary: #667eea → #764ba2 (Gradiente morado)
+
+Success: #43e97b
+
+Warning: #ffc107
+
+Danger: #dc3545
+
+Animaciones
+Fade In/Out
+
+Slide Up
+
+Hover Effects
+
+Loading Spinners
+
+Responsividad
+Mobile First
+
+Breakpoints: 480px, 768px, 1024px, 1400px
+
+🧪 Testing
+text
+# Ejecutar tests
 npm test
 
-# Ejecutar tests con reporte de cobertura
+# Con reporte de cobertura
 npm run test:coverage
-```
 
-**Resultados esperados:**
-- ✅ 27 tests ejecutados
-- Reporte de cobertura disponible en: `coverage/lcov-report/index.html`
-
-### Ejecutar Pruebas con Karma/Jasmine
-
-Para ejecutar las pruebas de funciones JavaScript con Karma y Jasmine:
-
-```bash
-# Ejecutar tests una vez
+# Tests con Karma/Jasmine
 npm run test:karma:single
+📸 Capturas de Pantalla
+Homepage
+Hero section con gradiente
 
-# Ejecutar tests en modo watch
-npm run test:karma
-```
+Productos destacados
 
-**Resultados esperados:**
-- ✅ 8 tests ejecutados
-- Reporte de cobertura disponible en: `coverage-karma/html/index.html`
+Categorías rápidas
 
-### Visualizar Reportes de Cobertura
+Features section
 
-Después de ejecutar las pruebas, puedes abrir los reportes HTML en tu navegador:
+Panel Admin
+Dashboard con estadísticas
 
-**Reporte Jest:**
-```
-coverage/lcov-report/index.html
-```
+Sidebar de navegación
 
-**Reporte Karma:**
-```
-coverage-karma/html/index.html
-```
+Gestión CRUD de productos
 
-### Estadísticas de Testing
+Modal para crear/editar
 
-| Framework | Tests | Archivos | Estado |
-|-----------|-------|----------|--------|
-| Jest + React Testing Library | 27 | 6 suites | ✅ PASS |
-| Karma + Jasmine | 8 | 1 suite | ✅ PASS |
-| **TOTAL** | **35** | **7 suites** | ✅ **SUCCESS** |
+Carrito
+Lista de productos
 
-## Componentes Testeados
+Actualización de cantidades
 
-### Tests con Jest (React Testing Library)
-- **FilterBar**: Validación de búsqueda y filtrado por categorías
-- **ProductReview**: Sistema de reseñas y calificaciones de productos
-- **RegisterForm**: Validaciones de registro (edad, contraseñas, email)
-- **ReferralCode**: Generación y visualización de códigos de referido
-- **Validators**: Funciones de validación (email, edad, contraseñas)
+Cálculo automático de totales
 
-### Tests con Karma/Jasmine
-- **validators.js**: Pruebas unitarias de funciones de validación
-  - validateEmail: Validación de formato de email
-  - isOver18: Verificación de edad mínima
-  - validatePassword: Validación de longitud de contraseña
-  - isDuocEmail: Detección de correos institucionales
+Botón de checkout
 
-## Funcionalidades Implementadas
-
-### Registro de Usuarios
-
-- Validación de email
-- Verificación de edad (mayores de 18 años)
-- Validación de contraseñas coincidentes
-- Generación automática de código de referido
-
-### Gestión del Carrito
-
-- Agregar productos con cantidades personalizadas
-- Actualizar cantidades desde el carrito
-- Eliminar productos individuales
-- Vaciar carrito completo
-- Cálculo automático de subtotales y totales
-- Aplicación de descuentos según tipo de usuario
-
-### Catálogo de Productos
-
-- Visualización de productos por categorías
-- Búsqueda por nombre o descripción
-- Filtrado por categoría específica
-- Información detallada de cada producto
-
-## Validaciones Implementadas
-
-- Email válido (formato correcto)
-- Edad mínima de 18 años
-- Contraseña mínima de 6 caracteres
-- Confirmación de contraseña
-- Detección automática de correos @duocuc.cl para descuentos
-
-## Scripts Disponibles
-
-```bash
+🚀 Scripts Disponibles
+text
 # Desarrollo
-npm start                    # Inicia el servidor de desarrollo
-npm run build               # Genera build de producción
+npm start              # Servidor desarrollo (puerto 3000)
+npm run build          # Build de producción
 
 # Testing
-npm test                    # Ejecuta tests Jest en modo watch
-npm run test:coverage       # Genera reporte de cobertura Jest
-npm run test:karma          # Ejecuta tests Karma en modo watch
-npm run test:karma:single   # Ejecuta tests Karma una vez
+npm test              # Tests Jest en modo watch
+npm run test:coverage # Reporte de cobertura Jest
+npm run test:karma    # Tests Karma/Jasmine
 
 # Otros
-npm run eject               # Expone configuración de Create React App
-```
+npm run eject         # Exponer configuración CRA
+🔒 Seguridad Implementada
+✅ Autenticación JWT con roles
 
-## Autor
+✅ Rutas protegidas por rol
 
-Desarrollado como proyecto académico para DSY1104 - Desarrollo FullStack II
+✅ Validación de tokens en cada request
 
-## Notas Adicionales
+✅ Gestión segura de sesión
 
-Este proyecto fue creado con Create React App y sigue las mejores prácticas de desarrollo frontend moderno. El diseño minimalista utiliza una paleta de colores profesional con fuentes Inter y Poppins para una mejor experiencia de usuario.
+✅ Logout con limpieza de datos
 
+✅ Restricciones de acceso en frontend y backend
+
+🐛 Solución de Problemas
+Error 401 - No autorizado
+Verificar que el token JWT esté en localStorage
+
+Hacer logout y login nuevamente
+
+Error 404 - Endpoint no encontrado
+Verificar que el backend esté corriendo en puerto 8081
+
+Revisar CORS en el backend
+
+Productos no cargan
+Verificar conexión con MySQL
+
+Revisar que haya productos activos en la BD
+
+📝 Notas de Desarrollo
+El modo DEMO permite probar sin base de datos conectada
+
+Los datos mock están disponibles para desarrollo
+
+El token expira después de 24 horas
+
+👨‍💻 Autor
+Proyecto Académico - Evaluación Parcial 3
+Asignatura: DSY1104 - Desarrollo FullStack II
+Institución: DuocUC
+
+📄 Licencia
+Este proyecto es de uso académico.

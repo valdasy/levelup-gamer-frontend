@@ -1,54 +1,125 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Container, Row, Col } from "react-bootstrap";
-import ProductCard from "../components/ProductCard/ProductCard";
-import FilterBar from "../components/FilterBar/FilterBar";
-import { CATEGORIES } from "../utils/constants";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Header from '../components/Header/Header';
+import Footer from '../components/Footer/Footer';
+import productoService from '../services/productoService';
+import categoriaService from '../services/categoriaService';
+import './ProductPage.css';
 
-const ProductPage = ({ products, addToCart }) => {
-  const { category } = useParams();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(
-    category === "all" ? "all" : category
-  );
+const ProductPage = () => {
+  const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const [productosData, categoriasData] = await Promise.all([
+        productoService.getProductosActivos(),
+        categoriaService.getCategoriasActivas()
+      ]);
+      
+      setProductos(productosData);
+      setCategorias(categoriasData);
+    } catch (err) {
+      console.error('Error cargando datos:', err);
+      setError('Error al cargar los productos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtrarPorCategoria = async (categoriaId) => {
+    try {
+      setLoading(true);
+      setCategoriaSeleccionada(categoriaId);
+      
+      if (categoriaId === null) {
+        const productosData = await productoService.getProductosActivos();
+        setProductos(productosData);
+      } else {
+        const productosData = await productoService.getProductosPorCategoria(categoriaId);
+        setProductos(productosData);
+      }
+    } catch (err) {
+      console.error('Error filtrando productos:', err);
+      setError('Error al filtrar productos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Container className="py-5">
-      <h2 className="mb-4">
-        {selectedCategory === "all" ? "Todos los Productos" : selectedCategory}
-      </h2>
+    <div className="product-page">
+      <Header />
+      
+      <main className="product-main">
+        <h1>Catálogo de Productos</h1>
 
-      <FilterBar
-        categories={CATEGORIES}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
-
-      <Row xs={1} md={2} lg={3} xl={4} className="g-4">
-        {filteredProducts.map((product) => (
-          <Col key={product.id}>
-            <ProductCard product={product} onAddToCart={addToCart} />
-          </Col>
-        ))}
-      </Row>
-
-      {filteredProducts.length === 0 && (
-        <div className="text-center py-5">
-          <h3 className="text-secondary">No se encontraron productos</h3>
+        {/* Filtro de categorías */}
+        <div className="categorias-filter">
+          <button 
+            className={categoriaSeleccionada === null ? 'active' : ''}
+            onClick={() => filtrarPorCategoria(null)}
+          >
+            Todas
+          </button>
+          {categorias.map((categoria) => (
+            <button
+              key={categoria.id}
+              className={categoriaSeleccionada === categoria.id ? 'active' : ''}
+              onClick={() => filtrarPorCategoria(categoria.id)}
+            >
+              {categoria.nombre}
+            </button>
+          ))}
         </div>
-      )}
-    </Container>
+
+        {loading && <div className="loading">Cargando productos...</div>}
+        {error && <div className="error">{error}</div>}
+
+        {/* Grid de productos */}
+        {!loading && !error && (
+          <div className="productos-grid">
+            {productos.length === 0 ? (
+              <p>No hay productos disponibles</p>
+            ) : (
+              productos.map((producto) => (
+                <div key={producto.id} className="producto-card">
+                  {producto.destacado && (
+                    <span className="badge-destacado">Destacado</span>
+                  )}
+                  <img 
+                    src={producto.imagenUrl || '/placeholder.png'} 
+                    alt={producto.nombre}
+                    onError={(e) => e.target.src = '/placeholder.png'}
+                  />
+                  <h3>{producto.nombre}</h3>
+                  <p className="categoria">{producto.categoria.nombre}</p>
+                  <p className="descripcion">{producto.descripcion}</p>
+                  <div className="producto-footer">
+                    <span className="precio">${producto.precio.toLocaleString('es-CL')}</span>
+                    <span className="stock">Stock: {producto.stock}</span>
+                  </div>
+                  <Link to={`/product/${producto.id}`} className="btn-ver-mas">
+                    Ver detalles
+                  </Link>
+                  <button className="btn-agregar">Agregar al carrito</button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 

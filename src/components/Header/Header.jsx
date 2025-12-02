@@ -1,19 +1,24 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
-import { useCarrito } from '../../context/CarritoContext';
-import './Header.css';
+import React from "react";
+import { Link } from "react-router-dom";
+import authService from "../../services/authService";
+import { useCarrito } from "../../context/CarritoContext";
+import "./Header.css";
 
-const Header = () => {
-  const navigate = useNavigate();
+const Header = ({ onLogout }) => {
   const isAuthenticated = authService.isAuthenticated();
   const user = authService.getCurrentUser();
   const { cantidadTotal } = useCarrito();
 
   const handleLogout = () => {
-    authService.logout();
-    navigate('/home');
+    if (onLogout) {
+      onLogout();
+    } else {
+      authService.logout();
+      window.location.href = "/home";
+    }
   };
+
+  const displayName = user?.nombreCompleto?.trim() || user?.email || "Usuario";
 
   return (
     <header className="header">
@@ -25,7 +30,7 @@ const Header = () => {
         <nav className="nav-menu">
           <Link to="/home">Inicio</Link>
           <Link to="/products">Productos</Link>
-          
+
           {isAuthenticated ? (
             <>
               <Link to="/cart" className="cart-link">
@@ -34,16 +39,15 @@ const Header = () => {
                   <span className="cart-badge">{cantidadTotal}</span>
                 )}
               </Link>
+
               <Link to="/profile">Mi Perfil</Link>
-              
-              {authService.hasRole('ADMIN') && (
-                <Link to="/admin">Admin</Link>
+
+              {authService.hasRole("ADMIN") && (
+                <Link to="/admin">Admin LevelUp</Link>
               )}
-              
+
               <div className="user-section">
-                <span className="user-name">
-                  {user?.nombreCompleto || user?.email}
-                </span>
+                <span className="user-name">{displayName}</span>
                 <button onClick={handleLogout} className="btn-logout">
                   Cerrar Sesión
                 </button>

@@ -1,0 +1,115 @@
+.orders-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.orders-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 3rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.orders-hero h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.order-card {
+  border: none;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+  border-left: 4px solid #667eea;
+}
+
+.order-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.order-number {
+  padding: 0.5rem 0;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.view-btn {
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+  transform: scale(1.1);
+}
+
+.empty-state-card {
+  border: none;
+  border-radius: 20px;
+  margin-top: 2rem;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  color: #e9ecef;
+}
+
+.empty-icon i {
+  display: inline-block;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.info-card {
+  border: none;
+  border-radius: 15px;
+  background: white;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.info-icon {
+  font-size: 2rem;
+  color: #667eea;
+}
+
+@media (max-width: 768px) {
+  .orders-hero h1 {
+    font-size: 1.75rem;
+  }
+
+  .order-card .row > div {
+    margin-bottom: 1rem;
+  }
+
+  .order-card .border-end {
+    border-right: none !important;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1rem;
+  }
+}

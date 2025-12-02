@@ -1,19 +1,25 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import authService from '../services/authService';
+import React from "react";
+import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const isAuthenticated = authService.isAuthenticated();
-  const user = authService.getCurrentUser();
+  const token = localStorage.getItem("token");
+  const userStr = localStorage.getItem("user");
 
-  if (!isAuthenticated) {
-    // No está autenticado, redirigir al login
+  if (!token) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole && !authService.hasRole(requiredRole)) {
-    // No tiene el rol requerido, redirigir al home
-    return <Navigate to="/home" replace />;
+  if (requiredRole) {
+    let user = null;
+    try {
+      user = JSON.parse(userStr);
+    } catch (e) {
+      return <Navigate to="/home" replace />;
+    }
+
+    if (!user?.roles?.includes(requiredRole)) {
+      return <Navigate to="/home" replace />;
+    }
   }
 
   return children;

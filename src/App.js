@@ -1,34 +1,58 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
-import { CarritoProvider } from './context/CarritoContext';
-import authService from './services/authService';
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { CarritoProvider } from "./context/CarritoContext";
+import authService from "./services/authService";
 
 // Pages
-import AuthPage from './pages/AuthPage';
-import HomePage from './pages/HomePage';
-import ProductPage from './pages/ProductPage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import ProfilePage from './pages/ProfilePage';
-import AdminPage from './pages/AdminPage';
-import AdminProductsPage from './pages/AdminProductsPage';
-import AdminRoutes from './pages/AdminRoutes';
+import AuthPage from "./pages/AuthPage";
+import HomePage from "./pages/HomePage";
+import ProductPage from "./pages/ProductPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+import OrdersPage from "./pages/OrdersPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
+import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/AdminPage";
+import AdminProductsPage from "./pages/AdminProductsPage";
+import AdminRoutes from "./pages/AdminRoutes";
 
-import './App.css';
+import "./App.css";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    authService.isAuthenticated()
+  );
+  const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
+
+  const handleLogin = (userData) => {
+    setIsAuthenticated(true);
+    setCurrentUser(userData);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    window.location.href = "/home";
+  };
+
+  useEffect(() => {
+    setIsAuthenticated(authService.isAuthenticated());
+    setCurrentUser(authService.getCurrentUser());
+  }, []);
+
   const RedirectIfAuthenticated = ({ children }) => {
-    const isAuthenticated = authService.isAuthenticated();
-    
     if (isAuthenticated) {
       return <Navigate to="/home" replace />;
     }
-    
     return children;
   };
 
@@ -37,105 +61,107 @@ function App() {
       <CarritoProvider>
         <div className="App">
           <Routes>
-            {/* Ruta raíz - ir al home sin forzar login */}
+            {/* Ruta raíz */}
             <Route path="/" element={<Navigate to="/home" replace />} />
 
-            {/* Auth - solo si NO está autenticado */}
-            <Route 
-              path="/auth" 
+            {/* Auth */}
+            <Route
+              path="/auth"
               element={
                 <RedirectIfAuthenticated>
-                  <AuthPage />
+                  <AuthPage onLogin={handleLogin} />
                 </RedirectIfAuthenticated>
-              } 
+              }
             />
 
-            {/* Rutas PÚBLICAS - no requieren login */}
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/products" element={<ProductPage />} />
-            <Route path="/product/:id" element={<ProductDetailPage />} />
+            {/* Públicas */}
+            <Route
+              path="/home"
+              element={<HomePage onLogout={handleLogout} />}
+            />
+            <Route
+              path="/products"
+              element={<ProductPage onLogout={handleLogout} />}
+            />
+            <Route
+              path="/product/:id"
+              element={<ProductDetailPage onLogout={handleLogout} />}
+            />
 
-            {/* Rutas PROTEGIDAS - requieren login */}
-            <Route 
-              path="/cart" 
+            {/* Protegidas */}
+            <Route
+              path="/cart"
               element={
                 <ProtectedRoute>
-                  <CartPage />
+                  <CartPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/checkout" 
+            <Route
+              path="/checkout"
               element={
                 <ProtectedRoute>
-                  <CheckoutPage />
+                  <CheckoutPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/order-success" 
+            <Route
+              path="/order-success"
               element={
                 <ProtectedRoute>
-                  <OrderSuccessPage />
+                  <OrderSuccessPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/orders" 
+            <Route
+              path="/orders"
               element={
                 <ProtectedRoute>
-                  <OrdersPage />
+                  <OrdersPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/order/:id" 
+            <Route
+              path="/order/:id"
               element={
                 <ProtectedRoute>
-                  <OrderDetailPage />
+                  <OrderDetailPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
-                  <ProfilePage />
+                  <ProfilePage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
 
-            {/* Rutas de ADMIN - requieren login + rol ADMIN */}
-            <Route 
-              path="/admin" 
+            {/* Admin */}
+            <Route
+              path="/admin"
               element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <AdminPage />
+                  <AdminPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/admin/products" 
+            <Route
+              path="/admin/products"
               element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <AdminProductsPage />
+                  <AdminProductsPage onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
-
-            <Route 
-              path="/admin/routes" 
+            <Route
+              path="/admin/routes"
               element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <AdminRoutes />
+                  <AdminRoutes onLogout={handleLogout} />
                 </ProtectedRoute>
-              } 
+              }
             />
 
             {/* 404 */}

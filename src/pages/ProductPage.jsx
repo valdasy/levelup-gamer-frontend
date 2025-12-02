@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import Header from '../components/Header/Header';
-import Footer from '../components/Footer/Footer';
-import productoService from '../services/productoService';
-import categoriaService from '../services/categoriaService';
-import { useCarrito } from '../context/CarritoContext';
-import './ProductPage.css';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import Header from "../components/Header/Header";
+import Footer from "../components/Footer/Footer";
+import productoService from "../services/productoService";
+import categoriaService from "../services/categoriaService";
+import { useCarrito } from "../context/CarritoContext";
+import "./ProductPage.css";
 
 const ProductPage = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { agregarProducto } = useCarrito();
 
   useEffect(() => {
@@ -24,14 +24,16 @@ const ProductPage = () => {
       setLoading(true);
       const [productosData, categoriasData] = await Promise.all([
         productoService.getProductosActivos(),
-        categoriaService.getCategoriasActivas()
+        categoriaService.getCategoriasActivas(),
       ]);
-      
-      setProductos(productosData);
-      setCategorias(categoriasData);
+
+      setProductos(productosData || []);
+      setCategorias(categoriasData || []);
     } catch (err) {
-      console.error('Error cargando datos:', err);
-      setError('Error al cargar los productos');
+      console.error("Error cargando datos:", err);
+      setError("Error al cargar los productos");
+      setProductos([]);
+      setCategorias([]);
     } finally {
       setLoading(false);
     }
@@ -41,17 +43,19 @@ const ProductPage = () => {
     try {
       setLoading(true);
       setCategoriaSeleccionada(categoriaId);
-      
+
       if (categoriaId === null) {
         const productosData = await productoService.getProductosActivos();
-        setProductos(productosData);
+        setProductos(productosData || []);
       } else {
-        const productosData = await productoService.getProductosPorCategoria(categoriaId);
-        setProductos(productosData);
+        const productosData = await productoService.getProductosPorCategoria(
+          categoriaId
+        );
+        setProductos(productosData || []);
       }
     } catch (err) {
-      console.error('Error filtrando productos:', err);
-      setError('Error al filtrar productos');
+      console.error("Error filtrando productos:", err);
+      setError("Error al filtrar productos");
     } finally {
       setLoading(false);
     }
@@ -60,22 +64,22 @@ const ProductPage = () => {
   const handleAgregarAlCarrito = async (productoId) => {
     try {
       await agregarProducto(productoId, 1);
-      alert('Producto agregado al carrito');
+      alert("¡Producto agregado al carrito!");
     } catch (error) {
-      alert('Error al agregar al carrito: ' + error.message);
+      alert("Por favor inicia sesión para agregar productos al carrito");
     }
   };
 
   return (
     <div className="product-page">
       <Header />
-      
+
       <main className="product-main">
         <h1>Catálogo de Productos</h1>
 
         <div className="categorias-filter">
-          <button 
-            className={categoriaSeleccionada === null ? 'active' : ''}
+          <button
+            className={categoriaSeleccionada === null ? "active" : ""}
             onClick={() => filtrarPorCategoria(null)}
           >
             Todas
@@ -83,7 +87,7 @@ const ProductPage = () => {
           {categorias.map((categoria) => (
             <button
               key={categoria.id}
-              className={categoriaSeleccionada === categoria.id ? 'active' : ''}
+              className={categoriaSeleccionada === categoria.id ? "active" : ""}
               onClick={() => filtrarPorCategoria(categoria.id)}
             >
               {categoria.nombre}
@@ -104,27 +108,31 @@ const ProductPage = () => {
                   {producto.destacado && (
                     <span className="badge-destacado">Destacado</span>
                   )}
-                  <img 
-                    src={producto.imagenUrl || '/placeholder.png'} 
+                  <img
+                    src={producto.imagenUrl || "/placeholder.png"}
                     alt={producto.nombre}
-                    onError={(e) => e.target.src = '/placeholder.png'}
+                    onError={(e) => (e.target.src = "/placeholder.png")}
                   />
                   <h3>{producto.nombre}</h3>
-                  <p className="categoria">{producto.categoria.nombre}</p>
+                  <p className="categoria">
+                    {producto.categoria?.nombre || "Sin categoría"}
+                  </p>
                   <p className="descripcion">{producto.descripcion}</p>
                   <div className="producto-footer">
-                    <span className="precio">${producto.precio.toLocaleString('es-CL')}</span>
+                    <span className="precio">
+                      ${Number(producto.precio || 0).toLocaleString("es-CL")}
+                    </span>
                     <span className="stock">Stock: {producto.stock}</span>
                   </div>
                   <Link to={`/product/${producto.id}`} className="btn-ver-mas">
                     Ver detalles
                   </Link>
-                  <button 
+                  <button
                     className="btn-agregar"
                     onClick={() => handleAgregarAlCarrito(producto.id)}
                     disabled={producto.stock === 0}
                   >
-                    {producto.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+                    {producto.stock === 0 ? "Sin stock" : "Agregar al carrito"}
                   </button>
                 </div>
               ))

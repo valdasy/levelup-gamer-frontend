@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import Header from '../components/Header/Header';
-import Footer from '../components/Footer/Footer';
-import productoService from '../services/productoService';
-import { useCarrito } from '../context/CarritoContext';
-import './HomePage.css';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import Header from "../components/Header/Header";
+import Footer from "../components/Footer/Footer";
+import productoService from "../services/productoService";
+import { useCarrito } from "../context/CarritoContext";
+import "./HomePage.css";
 
-const HomePage = () => {
+const HomePage = ({ onLogout }) => {
   const [productosDestacados, setProductosDestacados] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { agregarProducto } = useCarrito();
 
   useEffect(() => {
@@ -22,8 +22,8 @@ const HomePage = () => {
       const productos = await productoService.getProductosDestacados();
       setProductosDestacados(productos || []);
     } catch (err) {
-      console.error('Error cargando productos destacados:', err);
-      setError('Error al cargar productos destacados');
+      console.error("Error cargando productos destacados:", err);
+      setError("Error al cargar productos destacados");
       setProductosDestacados([]);
     } finally {
       setLoading(false);
@@ -33,16 +33,16 @@ const HomePage = () => {
   const handleAgregarAlCarrito = async (productoId) => {
     try {
       await agregarProducto(productoId, 1);
-      alert('¡Producto agregado al carrito!');
+      alert("¡Producto agregado al carrito!");
     } catch (error) {
-      alert('Por favor inicia sesión para agregar productos al carrito');
+      alert("Por favor inicia sesión para agregar productos al carrito");
     }
   };
 
   return (
     <div className="home-page">
-      <Header />
-      
+      <Header onLogout={onLogout} />
+
       <main className="home-main">
         {/* Hero Section con video o imagen de fondo */}
         <section className="hero-section">
@@ -51,7 +51,8 @@ const HomePage = () => {
             <h1 className="hero-title">Level UP Gamer</h1>
             <p className="hero-subtitle">Tu destino gaming definitivo</p>
             <p className="hero-description">
-              Descubre los últimos lanzamientos, consolas next-gen y accesorios premium
+              Descubre los últimos lanzamientos, consolas next-gen y accesorios
+              premium
             </p>
             <div className="hero-buttons">
               <Link to="/products" className="btn-primary">
@@ -106,14 +107,14 @@ const HomePage = () => {
               Ver todos <span>→</span>
             </Link>
           </div>
-          
+
           {loading && (
             <div className="loading-container">
               <div className="spinner"></div>
               <p>Cargando productos increíbles...</p>
             </div>
           )}
-          
+
           {error && <div className="error-message">{error}</div>}
 
           {!loading && !error && (
@@ -129,13 +130,16 @@ const HomePage = () => {
                 productosDestacados.slice(0, 6).map((producto) => (
                   <div key={producto.id} className="producto-card-modern">
                     <div className="producto-image-container">
-                      <img 
-                        src={producto.imagenUrl || '/placeholder.png'} 
+                      <img
+                        src={producto.imagenUrl || "/placeholder.png"}
                         alt={producto.nombre}
-                        onError={(e) => e.target.src = '/placeholder.png'}
+                        onError={(e) => (e.target.src = "/placeholder.png")}
                       />
                       <div className="producto-overlay">
-                        <Link to={`/product/${producto.id}`} className="btn-quick-view">
+                        <Link
+                          to={`/product/${producto.id}`}
+                          className="btn-quick-view"
+                        >
                           Ver detalles
                         </Link>
                       </div>
@@ -145,16 +149,16 @@ const HomePage = () => {
                     </div>
                     <div className="producto-info">
                       <span className="producto-categoria">
-                        {producto.categoria?.nombre || 'Sin categoría'}
+                        {producto.categoria?.nombre || "Sin categoría"}
                       </span>
                       <h3 className="producto-nombre">{producto.nombre}</h3>
                       <div className="producto-footer">
                         <div className="precio-container">
                           <span className="precio-actual">
-                            ${producto.precio?.toLocaleString('es-CL') || '0'}
+                            ${producto.precio?.toLocaleString("es-CL") || "0"}
                           </span>
                         </div>
-                        <button 
+                        <button
                           className="btn-add-cart"
                           onClick={() => handleAgregarAlCarrito(producto.id)}
                           title="Agregar al carrito"

@@ -1,175 +1,143 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Container, Row, Col, Button, Badge, Alert } from "react-bootstrap";
-import ProductReview from "../components/ProductReview/ProductReview";
+// src/pages/ProductDetailPage.jsx
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import Header from "../components/Header/Header";
+import Footer from "../components/Footer/Footer";
+import productoService from "../services/productoService";
+import { useCarrito } from "../context/CarritoContext";
 import "./ProductDetailPage.css";
 
-const ProductDetailPage = ({ products, addToCart }) => {
-  const { productId } = useParams();
-  const navigate = useNavigate();
+export default function ProductDetailPage() {
+  const { id } = useParams();
+  const [producto, setProducto] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [reviews, setReviews] = useState([]);
-  const [showAlert, setShowAlert] = useState(false);
+  const { agregarProducto } = useCarrito();
 
-  const product = products.find((p) => p.id === productId);
+  useEffect(() => {
+    const cargarProducto = async () => {
+      try {
+        setLoading(true);
+        const data = await productoService.getProductoPorId(id);
+        setProducto(data);
+      } catch (e) {
+        console.error("Error cargando producto:", e);
+        setError("No se pudo cargar el producto");
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargarProducto();
+  }, [id]);
 
-  if (!product) {
-    return (
-      <Container className="py-5 text-center">
-        <Alert variant="warning">
-          <h4>Producto no encontrado</h4>
-          <Button variant="primary" onClick={() => navigate("/")}>
-            Volver al inicio
-          </Button>
-        </Alert>
-      </Container>
-    );
-  }
-
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    setShowAlert(true);
-    setTimeout(() => setShowAlert(false), 3000);
+  const handleAgregarAlCarrito = async () => {
+    try {
+      await agregarProducto(producto.id, quantity);
+      alert("¡Producto agregado al carrito!");
+    } catch (e) {
+      alert("Por favor inicia sesión para agregar productos al carrito");
+    }
   };
 
-  const handleSubmitReview = (review) => {
-    setReviews([...reviews, review]);
-  };
-
-  const calculateAverageRating = () => {
-    if (reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return (sum / reviews.length).toFixed(1);
+  const handleChangeQuantity = (delta) => {
+    setQuantity((q) => {
+      const next = q + delta;
+      if (next < 1) return 1;
+      if (producto && next > producto.stock) return producto.stock;
+      return next;
+    });
   };
 
   return (
-    <Container className="py-5">
-      {showAlert && (
-        <Alert
-          variant="success"
-          className="position-fixed top-0 start-50 translate-middle-x mt-3"
-          style={{ zIndex: 1050 }}
-        >
-          Producto agregado al carrito
-        </Alert>
-      )}
+    <div className="product-detail-page">
+      <Header />
 
-      <Row>
-        <Col md={6}>
-          <div className="product-detail-image">
-            <img
-              src={product.image || "https://via.placeholder.com/500"}
-              alt={product.name}
-              className="img-fluid rounded"
-            />
-          </div>
-        </Col>
+      <main className="product-detail-main container py-4">
+        {loading && <p>Cargando producto...</p>}
+        {error && <p className="error">{error}</p>}
 
-        <Col md={6}>
-          <div className="product-detail-info">
-            <div className="mb-2">
-              <Badge bg="primary">{product.category}</Badge>
-              <span className="text-muted ms-2">{product.code}</span>
-            </div>
-
-            <h1 className="product-detail-title">{product.name}</h1>
-
-            {reviews.length > 0 && (
-              <div className="mb-3">
-                <span className="rating-stars">
-                  {"★".repeat(Math.round(calculateAverageRating()))}
-                  {"☆".repeat(5 - Math.round(calculateAverageRating()))}
-                </span>
-                <span className="ms-2 text-muted">
-                  {calculateAverageRating()} ({reviews.length} reseñas)
-                </span>
+        {!loading && !error && producto && (
+          <div className="row product-detail-container g-4">
+            <div className="col-md-6">
+              <div className="product-detail-image">
+                <img
+                  src={producto.imagenUrl || "/placeholder.png"}
+                  alt={producto.nombre}
+                  onError={(e) => (e.target.src = "/placeholder.png")}
+                />
               </div>
-            )}
-
-            <p className="product-detail-description">{product.description}</p>
-
-            <div className="product-detail-price mb-4">
-              {product.discount && (
-                <span className="discount-badge me-2">
-                  -{product.discount}%
-                </span>
-              )}
-              <span className="price-amount">
-                ${product.price.toLocaleString("es-CL")} CLP
-              </span>
             </div>
 
-            <div className="d-flex align-items-center gap-3 mb-4">
-              <div className="quantity-selector">
-                <Button
-                  variant="outline-secondary"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  -
-                </Button>
-                <span className="quantity-display">{quantity}</span>
-                <Button
-                  variant="outline-secondary"
-                  onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                >
-                  +
-                </Button>
-              </div>
-              <Button
-                variant="success"
-                size="lg"
-                onClick={handleAddToCart}
-                className="flex-grow-1"
-              >
-                Agregar al Carrito
-              </Button>
-            </div>
+            <div className="col-md-6">
+              <div className="product-detail-info">
+                <h1 className="product-detail-title">{producto.nombre}</h1>
+                <p className="categoria text-muted mb-1">
+                  {producto.categoria?.nombre || "Sin categoría"}
+                </p>
+                <p className="product-detail-description">
+                  {producto.descripcion}
+                </p>
 
-            <Button variant="outline-primary" onClick={() => navigate(-1)}>
-              Volver
-            </Button>
-          </div>
-        </Col>
-      </Row>
-
-      <Row className="mt-5">
-        <Col lg={8}>
-          <h3 className="mb-4">Reseñas de Clientes</h3>
-
-          {reviews.length > 0 ? (
-            <div className="reviews-list mb-4">
-              {reviews.map((review, index) => (
-                <div key={index} className="review-item">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                      <strong>{review.userName}</strong>
-                      <div className="review-stars">
-                        {"★".repeat(review.rating)}
-                        {"☆".repeat(5 - review.rating)}
-                      </div>
-                    </div>
-                    <small className="text-muted">
-                      {new Date(review.date).toLocaleDateString("es-CL")}
-                    </small>
-                  </div>
-                  <p className="review-comment">{review.comment}</p>
+                <div className="d-flex align-items-center justify-content-between mb-3 product-detail-price">
+                  <span className="price-amount">
+                    ${Number(producto.precio || 0).toLocaleString("es-CL")}
+                  </span>
+                  {producto.destacado && (
+                    <span className="discount-badge">Destacado</span>
+                  )}
                 </div>
-              ))}
+
+                <p className="stock mb-3">
+                  Stock: {producto.stock > 0 ? producto.stock : "Sin stock"}
+                </p>
+
+                <div className="d-flex flex-column gap-3 mb-4">
+                  <div className="quantity-selector">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => handleChangeQuantity(-1)}
+                      disabled={quantity <= 1}
+                    >
+                      -
+                    </button>
+                    <span className="quantity-display">{quantity}</span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => handleChangeQuantity(1)}
+                      disabled={
+                        producto.stock === 0 || quantity >= producto.stock
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <button
+                    className="btn btn-primary btn-lg w-100"
+                    onClick={handleAgregarAlCarrito}
+                    disabled={producto.stock === 0}
+                  >
+                    {producto.stock === 0 ? "Sin stock" : "Agregar al carrito"}
+                  </button>
+                </div>
+
+                {/* Ejemplo simple de rating fijo */}
+                <div className="mb-3">
+                  <div className="rating-stars">★★★★☆</div>
+                  <small className="text-muted">
+                    Valoración referencial de clientes
+                  </small>
+                </div>
+              </div>
             </div>
-          ) : (
-            <Alert variant="info">
-              Sé el primero en dejar una reseña de este producto
-            </Alert>
-          )}
+          </div>
+        )}
+      </main>
 
-          <ProductReview
-            productId={product.id}
-            onSubmitReview={handleSubmitReview}
-          />
-        </Col>
-      </Row>
-    </Container>
+      <Footer />
+    </div>
   );
-};
-
-export default ProductDetailPage;
+}

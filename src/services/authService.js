@@ -100,6 +100,11 @@ const authService = {
     }
   },
 
+  // ✅ NUEVO: Obtener token JWT
+  getToken: () => {
+    return localStorage.getItem("token");
+  },
+
   // Verificar si está autenticado
   isAuthenticated: () => {
     const token = localStorage.getItem("token");

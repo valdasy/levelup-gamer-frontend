@@ -1,19 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import authService from "../../services/authService";
-import { useCarrito } from "../../context/CarritoContext";
 import "./Header.css";
 
-const Header = ({ onLogout }) => {
-  const isAuthenticated = authService.isAuthenticated();
-  const user = authService.getCurrentUser();
-  const { cantidadTotal } = useCarrito();
+// ✅ Header ahora recibe 'user' y 'cartItemsCount' como props
+const Header = ({ user, cartItemsCount = 0, onLogout }) => {
+  // ✅ La autenticación y el rol se determinan desde la prop 'user'
+  const isAuthenticated = !!user;
+  const isAdmin = user?.roles?.includes("ADMIN");
 
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
     } else {
-      authService.logout();
+      // Fallback por si onLogout no se pasa
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "/home";
     }
   };
@@ -34,17 +35,17 @@ const Header = ({ onLogout }) => {
           {isAuthenticated ? (
             <>
               <Link to="/cart" className="cart-link">
-                Carrito
-                {cantidadTotal > 0 && (
-                  <span className="cart-badge">{cantidadTotal}</span>
+                🛒 Carrito
+                {/* ✅ Usa la prop 'cartItemsCount' para mostrar la cantidad */}
+                {cartItemsCount > 0 && (
+                  <span className="cart-badge">{cartItemsCount}</span>
                 )}
               </Link>
 
               <Link to="/profile">Mi Perfil</Link>
 
-              {authService.hasRole("ADMIN") && (
-                <Link to="/admin">Admin LevelUp</Link>
-              )}
+              {/* ✅ Usa la variable 'isAdmin' para mostrar el enlace */}
+              {isAdmin && <Link to="/admin">Admin LevelUp</Link>}
 
               <div className="user-section">
                 <span className="user-name">{displayName}</span>

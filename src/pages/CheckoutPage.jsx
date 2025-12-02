@@ -1,18 +1,20 @@
-// src/pages/CheckoutPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Row, Col, Button, Card } from "react-bootstrap";
 import { isDuocEmail, validateEmail } from "../utils/validators";
 import { useCarrito } from "../context/CarritoContext";
 import authService from "../services/authService";
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer";
+import "./CheckoutPage.css";
 
 export default function CheckoutPage({ onLogout }) {
   const navigate = useNavigate();
-  const { carrito, loading, cargarCarrito } = useCarrito();
+  const { carrito, loading, cargarCarrito, obtenerCantidadTotal } =
+    useCarrito();
   const user = authService.getCurrentUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const cartItemsCount = obtenerCantidadTotal();
 
   // Cargar carrito si no está
   useEffect(() => {
@@ -43,37 +45,71 @@ export default function CheckoutPage({ onLogout }) {
     return { subtotal: sub, discount: disc, total: sub - disc };
   }, [items, user]);
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    addressLine: "",
-    number: "",
-    apt: "",
-    city: "",
-    region: "",
-    zip: "",
-    notes: "",
-    saveToProfile: true,
-  });
-
-  useEffect(() => {
+  // ✅ CORRECCIÓN: Inicializar el estado UNA SOLA VEZ con los datos del usuario
+  const [form, setForm] = useState(() => {
     if (user) {
-      setForm((f) => ({
-        ...f,
+      return {
         name: user.nombreCompleto || "",
         email: user.email || "",
         phone: user.telefono || "",
         addressLine: user.direccion || "",
-      }));
+        number: "",
+        apt: "",
+        city: "",
+        region: "",
+        zip: "",
+        notes: "",
+        saveToProfile: true,
+      };
     }
-  }, [user]);
+
+    return {
+      name: "",
+      email: "",
+      phone: "",
+      addressLine: "",
+      number: "",
+      apt: "",
+      city: "",
+      region: "",
+      zip: "",
+      notes: "",
+      saveToProfile: true,
+    };
+  });
+
+  // ✅ ELIMINADO: El useEffect que causaba el problema
+  // useEffect(() => {
+  //   if (user) {
+  //     setForm((f) => ({
+  //       ...f,
+  //       name: user.nombreCompleto || "",
+  //       email: user.email || "",
+  //       phone: user.telefono || "",
+  //       addressLine: user.direccion || "",
+  //     }));
+  //   }
+  // }, [user]);
 
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
+    const name = e.target.name;
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+
+    // Limpiar error al escribir
+    if (errors[name]) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: null,
+      }));
+    }
   };
 
   const validatePhone = (value) => value.replace(/\D/g, "").length >= 8;
@@ -82,8 +118,10 @@ export default function CheckoutPage({ onLogout }) {
     const e = {};
     if (!form.name.trim()) e.name = "Nombre requerido";
     if (!validateEmail(form.email)) e.email = "Email inválido";
-    if (!validatePhone(form.phone)) e.phone = "Teléfono inválido";
+    if (!validatePhone(form.phone))
+      e.phone = "Teléfono inválido (mínimo 8 dígitos)";
     if (!form.addressLine.trim()) e.addressLine = "Calle requerida";
+    if (!form.number.trim()) e.number = "Número requerido";
     if (!form.city.trim()) e.city = "Ciudad requerida";
     if (!form.region.trim()) e.region = "Región requerida";
     setErrors(e);
@@ -111,17 +149,24 @@ export default function CheckoutPage({ onLogout }) {
       saveToProfile: !!user && form.saveToProfile,
     };
 
-    // Aquí luego conectarás con tu backend de órdenes
+    // Simulación de envío
     console.log("Payload de checkout:", payload);
-    navigate("/order-success");
+    setTimeout(() => {
+      navigate("/order-success");
+    }, 1500);
   };
 
   if (loading && !carrito) {
     return (
       <div className="checkout-page">
-        <Header onLogout={onLogout} />
-        <main className="container my-4">
-          <p>Cargando carrito...</p>
+        <Header
+          user={user}
+          cartItemsCount={cartItemsCount}
+          onLogout={onLogout}
+        />
+        <main className="checkout-loading">
+          <div className="spinner"></div>
+          <p>Cargando checkout...</p>
         </main>
         <Footer />
       </div>
@@ -130,230 +175,272 @@ export default function CheckoutPage({ onLogout }) {
 
   return (
     <div className="checkout-page">
-      <Header onLogout={onLogout} />
-      <div className="container my-4">
-        <Button variant="link" onClick={() => navigate("/cart")}>
-          {"< Volver al carrito"}
-        </Button>
-        <Row className="g-4">
-          <Col md={8}>
-            <Card>
-              <Card.Body>
-                <h4 className="mb-3">Datos de contacto</h4>
-                <Form onSubmit={handleSubmit} noValidate>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <Form.Group>
-                        <Form.Label>Nombre completo</Form.Label>
-                        <Form.Control
-                          name="name"
-                          value={form.name}
-                          onChange={handleChange}
-                          isInvalid={!!errors.name}
-                          placeholder="Ej: Juan Pérez"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.name}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group>
-                        <Form.Label>Email</Form.Label>
-                        <Form.Control
-                          name="email"
-                          type="email"
-                          value={form.email}
-                          onChange={handleChange}
-                          isInvalid={!!errors.email}
-                          placeholder="tu@correo.com"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.email}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                  </Row>
+      <Header user={user} cartItemsCount={cartItemsCount} onLogout={onLogout} />
 
-                  <Row className="mb-4">
-                    <Col md={6}>
-                      <Form.Group>
-                        <Form.Label>Teléfono</Form.Label>
-                        <Form.Control
-                          name="phone"
-                          value={form.phone}
-                          onChange={handleChange}
-                          isInvalid={!!errors.phone}
-                          placeholder="Ej: +56 9 1234 5678"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.phone}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                  </Row>
+      <main className="checkout-main">
+        <div className="checkout-container">
+          <div className="checkout-header-nav">
+            <button className="btn-back" onClick={() => navigate("/cart")}>
+              ← Volver al carrito
+            </button>
+            <h1>Finalizar Compra</h1>
+          </div>
 
-                  <h4 className="mb-3">Dirección de entrega</h4>
-                  <Row className="mb-3">
-                    <Col md={8}>
-                      <Form.Group>
-                        <Form.Label>Calle</Form.Label>
-                        <Form.Control
-                          name="addressLine"
-                          value={form.addressLine}
-                          onChange={handleChange}
-                          isInvalid={!!errors.addressLine}
-                          placeholder="Ej: Av. Siempre Viva"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.addressLine}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>Número</Form.Label>
-                        <Form.Control
-                          name="number"
-                          value={form.number}
-                          onChange={handleChange}
-                          placeholder="1234"
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
+          <div className="checkout-grid">
+            {/* Columna Izquierda: Formulario */}
+            <div className="checkout-form-section">
+              <div className="checkout-card">
+                <h2 className="card-title">📍 Datos de Envío</h2>
+                <form onSubmit={handleSubmit} noValidate>
+                  {/* Datos Personales */}
+                  <div className="form-section-title">
+                    Información de contacto
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Nombre completo</label>
+                      <input
+                        type="text"
+                        name="name"
+                        className={`form-input ${errors.name ? "error" : ""}`}
+                        value={form.name}
+                        onChange={handleChange}
+                        placeholder="Ej: Juan Pérez"
+                      />
+                      {errors.name && (
+                        <span className="error-msg">{errors.name}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label>Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        className={`form-input ${errors.email ? "error" : ""}`}
+                        value={form.email}
+                        onChange={handleChange}
+                        placeholder="tu@correo.com"
+                      />
+                      {errors.email && (
+                        <span className="error-msg">{errors.email}</span>
+                      )}
+                    </div>
+                  </div>
 
-                  <Row className="mb-3">
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>Depto./Casa (opcional)</Form.Label>
-                        <Form.Control
-                          name="apt"
-                          value={form.apt}
-                          onChange={handleChange}
-                          placeholder="Depto 45"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>Ciudad</Form.Label>
-                        <Form.Control
-                          name="city"
-                          value={form.city}
-                          onChange={handleChange}
-                          isInvalid={!!errors.city}
-                          placeholder="Santiago"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.city}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>Región</Form.Label>
-                        <Form.Control
-                          name="region"
-                          value={form.region}
-                          onChange={handleChange}
-                          isInvalid={!!errors.region}
-                          placeholder="RM"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.region}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                  </Row>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Teléfono</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        className={`form-input ${errors.phone ? "error" : ""}`}
+                        value={form.phone}
+                        onChange={handleChange}
+                        placeholder="+56 9 1234 5678"
+                      />
+                      {errors.phone && (
+                        <span className="error-msg">{errors.phone}</span>
+                      )}
+                    </div>
+                  </div>
 
-                  <Row className="mb-3">
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>Código postal (opcional)</Form.Label>
-                        <Form.Control
-                          name="zip"
-                          value={form.zip}
-                          onChange={handleChange}
-                          placeholder="1230000"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={8}>
-                      <Form.Group>
-                        <Form.Label>Referencias (opcional)</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={2}
-                          name="notes"
-                          value={form.notes}
-                          onChange={handleChange}
-                          placeholder="Color de portón, punto de referencia, etc."
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
+                  {/* Dirección */}
+                  <div className="form-section-title mt-4">
+                    Dirección de entrega
+                  </div>
+                  <div className="form-row with-30">
+                    <div className="form-group flex-70">
+                      <label>Calle</label>
+                      <input
+                        type="text"
+                        name="addressLine"
+                        className={`form-input ${
+                          errors.addressLine ? "error" : ""
+                        }`}
+                        value={form.addressLine}
+                        onChange={handleChange}
+                        placeholder="Ej: Av. Siempre Viva"
+                      />
+                      {errors.addressLine && (
+                        <span className="error-msg">{errors.addressLine}</span>
+                      )}
+                    </div>
+                    <div className="form-group flex-30">
+                      <label>Número</label>
+                      <input
+                        type="text"
+                        name="number"
+                        className={`form-input ${errors.number ? "error" : ""}`}
+                        value={form.number}
+                        onChange={handleChange}
+                        placeholder="123"
+                      />
+                      {errors.number && (
+                        <span className="error-msg">{errors.number}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Depto / Casa (Opcional)</label>
+                      <input
+                        type="text"
+                        name="apt"
+                        className="form-input"
+                        value={form.apt}
+                        onChange={handleChange}
+                        placeholder="Depto 402"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Ciudad</label>
+                      <input
+                        type="text"
+                        name="city"
+                        className={`form-input ${errors.city ? "error" : ""}`}
+                        value={form.city}
+                        onChange={handleChange}
+                        placeholder="Santiago"
+                      />
+                      {errors.city && (
+                        <span className="error-msg">{errors.city}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Región</label>
+                      <input
+                        type="text"
+                        name="region"
+                        className={`form-input ${errors.region ? "error" : ""}`}
+                        value={form.region}
+                        onChange={handleChange}
+                        placeholder="Metropolitana"
+                      />
+                      {errors.region && (
+                        <span className="error-msg">{errors.region}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label>Código Postal (Opcional)</label>
+                      <input
+                        type="text"
+                        name="zip"
+                        className="form-input"
+                        value={form.zip}
+                        onChange={handleChange}
+                        placeholder="1234567"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group mt-3">
+                    <label>Instrucciones de entrega (Opcional)</label>
+                    <textarea
+                      name="notes"
+                      className="form-input"
+                      rows="2"
+                      value={form.notes}
+                      onChange={handleChange}
+                      placeholder="Dejar en conserjería, timbre malo, etc."
+                    ></textarea>
+                  </div>
 
                   {user && (
-                    <Form.Check
-                      className="mb-3"
-                      type="checkbox"
-                      name="saveToProfile"
-                      checked={form.saveToProfile}
-                      onChange={handleChange}
-                      label="Guardar esta dirección en mi perfil"
-                    />
+                    <div className="form-check mt-3">
+                      <input
+                        type="checkbox"
+                        id="saveToProfile"
+                        name="saveToProfile"
+                        checked={form.saveToProfile}
+                        onChange={handleChange}
+                      />
+                      <label htmlFor="saveToProfile">
+                        Guardar esta dirección en mi perfil
+                      </label>
+                    </div>
                   )}
 
-                  <div className="d-flex gap-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => navigate("/cart")}
-                    >
-                      Volver al carrito
-                    </Button>
-                    <Button
-                      variant="primary"
+                  <div className="form-actions mt-4">
+                    <button
                       type="submit"
+                      className="btn-primary-large"
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? "Procesando..." : "Confirmar compra"}
-                    </Button>
+                      {isSubmitting ? "Procesando..." : "Confirmar y Pagar"}
+                    </button>
                   </div>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
+                </form>
+              </div>
+            </div>
 
-          <Col md={4}>
-            <Card>
-              <Card.Body>
-                <h5>Resumen</h5>
-                <div className="d-flex justify-content-between">
-                  <span>Subtotal</span>
-                  <span>${subtotal?.toLocaleString("es-CL")}</span>
+            {/* Columna Derecha: Resumen */}
+            <div className="checkout-summary-section">
+              <div className="checkout-summary-card">
+                <h2 className="card-title">🛒 Resumen del Pedido</h2>
+
+                <div className="summary-items-list">
+                  {items.map((item) => (
+                    <div key={item.id} className="summary-item">
+                      <div className="summary-item-img">
+                        <img
+                          src={item.producto?.imagenUrl || "/placeholder.png"}
+                          alt={item.producto?.nombre}
+                          onError={(e) => (e.target.src = "/placeholder.png")}
+                        />
+                        <span className="item-qty-badge">{item.cantidad}</span>
+                      </div>
+                      <div className="summary-item-details">
+                        <h4>{item.producto?.nombre}</h4>
+                        <p>
+                          ${Number(item.precioUnitario).toLocaleString("es-CL")}
+                        </p>
+                      </div>
+                      <div className="summary-item-total">
+                        ${Number(item.subtotal).toLocaleString("es-CL")}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                {discount > 0 && (
-                  <div className="d-flex justify-content-between text-success">
-                    <span>Descuento DuocUC</span>
-                    <span>- ${discount?.toLocaleString("es-CL")}</span>
+
+                <div className="summary-totals">
+                  <div className="summary-row">
+                    <span>Subtotal</span>
+                    <span>${subtotal?.toLocaleString("es-CL")}</span>
                   </div>
-                )}
-                <hr />
-                <div className="d-flex justify-content-between fw-semibold">
-                  <span>Total</span>
-                  <span>${total?.toLocaleString("es-CL")}</span>
+                  {discount > 0 && (
+                    <div className="summary-row discount">
+                      <span>
+                        <span className="discount-tag">DESCUENTO DUOC</span>
+                      </span>
+                      <span>- ${discount?.toLocaleString("es-CL")}</span>
+                    </div>
+                  )}
+                  <div className="summary-row shipping">
+                    <span>Envío</span>
+                    <span className="free-shipping">GRATIS</span>
+                  </div>
+
+                  <div className="summary-divider"></div>
+
+                  <div className="summary-row total">
+                    <span>Total a pagar</span>
+                    <span>${total?.toLocaleString("es-CL")}</span>
+                  </div>
                 </div>
-                <small className="text-muted">
-                  {user?.email && isDuocEmail(user.email)
-                    ? "Se aplicó 20% de descuento por email @duocuc.cl"
-                    : "Inicia sesión con correo @duocuc.cl para obtener 20% de descuento"}
-                </small>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </div>
+
+                <div className="security-badge">
+                  <span className="lock-icon">🔒</span>
+                  <p>Pago 100% Seguro y Encriptado</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
       <Footer />
     </div>
   );

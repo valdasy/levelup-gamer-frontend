@@ -6,7 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { CarritoProvider } from "./context/CarritoContext";
+import { CarritoProvider, useCarrito } from "./context/CarritoContext"; // ✅ Importar useCarrito
 import authService from "./services/authService";
 
 // Pages
@@ -22,22 +22,29 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
 import AdminProductsPage from "./pages/AdminProductsPage";
-import AdminRoutes from "./pages/AdminRoutes";
 
 import "./App.css";
 
-function App() {
+// ✅ Componente interno que SÍ puede usar useCarrito
+const AppContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(
     authService.isAuthenticated()
   );
   const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
 
+  // ✅ Obtenemos funciones del carrito
+  const { cargarCarrito, limpiarCarritoContexto } = useCarrito();
+
   const handleLogin = (userData) => {
     setIsAuthenticated(true);
     setCurrentUser(userData);
+    // ✅ Forzamos la carga del carrito al hacer login
+    cargarCarrito();
   };
 
   const handleLogout = () => {
+    // ✅ Limpiamos el estado del carrito al salir
+    limpiarCarritoContexto();
     authService.logout();
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -57,117 +64,113 @@ function App() {
   };
 
   return (
+    <div className="App">
+      <Routes>
+        {/* Ruta raíz */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
+
+        {/* Auth */}
+        <Route
+          path="/auth"
+          element={
+            <RedirectIfAuthenticated>
+              <AuthPage onLogin={handleLogin} />
+            </RedirectIfAuthenticated>
+          }
+        />
+
+        {/* Públicas */}
+        <Route path="/home" element={<HomePage onLogout={handleLogout} />} />
+        <Route
+          path="/products"
+          element={<ProductPage onLogout={handleLogout} />}
+        />
+        <Route
+          path="/product/:id"
+          element={<ProductDetailPage onLogout={handleLogout} />}
+        />
+
+        {/* Protegidas */}
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <CartPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-success"
+          element={
+            <ProtectedRoute>
+              <OrderSuccessPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <OrdersPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetailPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <AdminPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/products"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <AdminProductsPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
+    </div>
+  );
+};
+
+// ✅ Componente Principal que envuelve todo
+function App() {
+  return (
     <Router>
       <CarritoProvider>
-        <div className="App">
-          <Routes>
-            {/* Ruta raíz */}
-            <Route path="/" element={<Navigate to="/home" replace />} />
-
-            {/* Auth */}
-            <Route
-              path="/auth"
-              element={
-                <RedirectIfAuthenticated>
-                  <AuthPage onLogin={handleLogin} />
-                </RedirectIfAuthenticated>
-              }
-            />
-
-            {/* Públicas */}
-            <Route
-              path="/home"
-              element={<HomePage onLogout={handleLogout} />}
-            />
-            <Route
-              path="/products"
-              element={<ProductPage onLogout={handleLogout} />}
-            />
-            <Route
-              path="/product/:id"
-              element={<ProductDetailPage onLogout={handleLogout} />}
-            />
-
-            {/* Protegidas */}
-            <Route
-              path="/cart"
-              element={
-                <ProtectedRoute>
-                  <CartPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checkout"
-              element={
-                <ProtectedRoute>
-                  <CheckoutPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/order-success"
-              element={
-                <ProtectedRoute>
-                  <OrderSuccessPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <ProtectedRoute>
-                  <OrdersPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/order/:id"
-              element={
-                <ProtectedRoute>
-                  <OrderDetailPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/products"
-              element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminProductsPage onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/routes"
-              element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminRoutes onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* 404 */}
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Routes>
-        </div>
+        <AppContent />
       </CarritoProvider>
     </Router>
   );

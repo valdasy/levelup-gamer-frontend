@@ -5,6 +5,7 @@ import Footer from "../components/Footer/Footer";
 import productoService from "../services/productoService";
 import categoriaService from "../services/categoriaService";
 import { useCarrito } from "../context/CarritoContext";
+import authService from "../services/authService";
 import "./ProductPage.css";
 
 const ProductPage = () => {
@@ -13,7 +14,10 @@ const ProductPage = () => {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { agregarProducto } = useCarrito();
+  const { agregarProducto, obtenerCantidadTotal } = useCarrito(); // ✅ Agregado obtenerCantidadTotal
+
+  const user = authService.getCurrentUser(); // ✅ Obtener usuario
+  const cartItemsCount = obtenerCantidadTotal(); // ✅ Obtener cantidad del carrito
 
   useEffect(() => {
     cargarDatos();
@@ -63,16 +67,23 @@ const ProductPage = () => {
 
   const handleAgregarAlCarrito = async (productoId) => {
     try {
+      if (!authService.isAuthenticated()) {
+        alert("Por favor inicia sesión para agregar productos al carrito");
+        return;
+      }
+
       await agregarProducto(productoId, 1);
       alert("¡Producto agregado al carrito!");
     } catch (error) {
-      alert("Por favor inicia sesión para agregar productos al carrito");
+      console.error("Error al agregar al carrito:", error);
+      alert(error.message || "Error al agregar producto al carrito");
     }
   };
 
   return (
     <div className="product-page">
-      <Header />
+      {/* ✅ Pasando props correctas al Header */}
+      <Header cartItemsCount={cartItemsCount} user={user} />
 
       <main className="product-main">
         <h1>Catálogo de Productos</h1>

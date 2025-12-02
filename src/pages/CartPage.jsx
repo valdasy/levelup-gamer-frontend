@@ -1,9 +1,9 @@
-// src/pages/CartPage.jsx
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer";
 import { useCarrito } from "../context/CarritoContext";
+import authService from "../services/authService";
 import "./CartPage.css";
 
 const CartPage = () => {
@@ -11,23 +11,31 @@ const CartPage = () => {
   const {
     carrito,
     loading,
+    error,
     cargarCarrito,
     actualizarCantidad,
     eliminarItem,
     vaciarCarrito,
+    obtenerCantidadTotal,
   } = useCarrito();
 
-  // Cargar carrito al montar
+  // Obtener datos para el Header
+  const user = authService.getCurrentUser();
+  const cartItemsCount = obtenerCantidadTotal();
+
+  // Cargar carrito al montar si no existe
   useEffect(() => {
-    cargarCarrito();
-  }, []);
+    if (!carrito && authService.isAuthenticated()) {
+      cargarCarrito();
+    }
+  }, [carrito, cargarCarrito]);
 
   const handleCantidadChange = async (itemId, nuevaCantidad) => {
     if (nuevaCantidad < 1) return;
     try {
       await actualizarCantidad(itemId, nuevaCantidad);
-    } catch (error) {
-      alert("Error al actualizar cantidad: " + (error?.message || ""));
+    } catch (err) {
+      alert("Error al actualizar cantidad: " + (err?.message || ""));
     }
   };
 
@@ -35,8 +43,8 @@ const CartPage = () => {
     if (window.confirm("¿Estás seguro de eliminar este producto?")) {
       try {
         await eliminarItem(itemId);
-      } catch (error) {
-        alert("Error al eliminar item: " + (error?.message || ""));
+      } catch (err) {
+        alert("Error al eliminar item: " + (err?.message || ""));
       }
     }
   };
@@ -45,8 +53,8 @@ const CartPage = () => {
     if (window.confirm("¿Estás seguro de vaciar el carrito?")) {
       try {
         await vaciarCarrito();
-      } catch (error) {
-        alert("Error al vaciar carrito: " + (error?.message || ""));
+      } catch (err) {
+        alert("Error al vaciar carrito: " + (err?.message || ""));
       }
     }
   };
@@ -55,30 +63,37 @@ const CartPage = () => {
     navigate("/checkout");
   };
 
-  if (loading) {
+  // Extraer items de forma segura
+  const items = Array.isArray(carrito?.items) ? carrito.items : [];
+  const isEmpty = !loading && items.length === 0;
+
+  // Renderizado de carga
+  if (loading && !carrito) {
     return (
       <div className="cart-page">
-        <Header />
+        <Header user={user} cartItemsCount={cartItemsCount} />
         <main className="cart-main">
-          <div className="loading">Cargando carrito...</div>
+          <div className="loading-container">
+            <p>Cargando tu carrito...</p>
+          </div>
         </main>
         <Footer />
       </div>
     );
   }
 
-  const items = Array.isArray(carrito?.items) ? carrito.items : [];
-  const isEmpty = !loading && (!carrito || items.length === 0);
-
   return (
     <div className="cart-page">
-      <Header />
+      <Header user={user} cartItemsCount={cartItemsCount} />
 
       <main className="cart-main">
         <h1>Mi Carrito</h1>
 
+        {error && <div className="error-message">{error}</div>}
+
         {isEmpty ? (
           <div className="cart-empty">
+            <div style={{ fontSize: "48px", marginBottom: "20px" }}>🛒</div>
             <p>Tu carrito está vacío</p>
             <button
               onClick={() => navigate("/products")}
@@ -170,7 +185,7 @@ const CartPage = () => {
 
               <div className="summary-row">
                 <span>Envío:</span>
-                <span>A calcular</span>
+                <span>Calculado en el siguiente paso</span>
               </div>
 
               <div className="summary-divider"></div>

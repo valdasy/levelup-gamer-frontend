@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer";
 import productoService from "../services/productoService";
+import authService from "../services/authService"; // ✅ Importar authService
 import { useCarrito } from "../context/CarritoContext";
 import "./HomePage.css";
 
@@ -10,7 +11,13 @@ const HomePage = ({ onLogout }) => {
   const [productosDestacados, setProductosDestacados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { agregarProducto } = useCarrito();
+
+  // ✅ Obtener 'obtenerCantidadTotal' del contexto
+  const { agregarProducto, obtenerCantidadTotal } = useCarrito();
+
+  // ✅ Obtener usuario y cantidad del carrito aquí
+  const user = authService.getCurrentUser();
+  const cartItemsCount = obtenerCantidadTotal();
 
   useEffect(() => {
     cargarProductosDestacados();
@@ -31,17 +38,25 @@ const HomePage = ({ onLogout }) => {
   };
 
   const handleAgregarAlCarrito = async (productoId) => {
+    // ✅ Mejorar la lógica para dar feedback inmediato
+    if (!authService.isAuthenticated()) {
+      alert("Por favor inicia sesión para agregar productos al carrito");
+      return;
+    }
+
     try {
       await agregarProducto(productoId, 1);
       alert("¡Producto agregado al carrito!");
     } catch (error) {
-      alert("Por favor inicia sesión para agregar productos al carrito");
+      console.error("Error al agregar al carrito:", error);
+      alert(error.message || "No se pudo agregar el producto al carrito.");
     }
   };
 
   return (
     <div className="home-page">
-      <Header onLogout={onLogout} />
+      {/* ✅ Pasar 'user' y 'cartItemsCount' como props al Header */}
+      <Header user={user} cartItemsCount={cartItemsCount} onLogout={onLogout} />
 
       <main className="home-main">
         {/* Hero Section con video o imagen de fondo */}

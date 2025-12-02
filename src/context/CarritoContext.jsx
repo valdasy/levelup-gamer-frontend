@@ -1,60 +1,65 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import carritoService from '../services/carritoService';
-import authService from '../services/authService';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import carritoService from "../services/carritoService";
+import authService from "../services/authService";
 
 const CarritoContext = createContext();
 
 export const useCarrito = () => {
   const context = useContext(CarritoContext);
   if (!context) {
-    throw new Error('useCarrito debe usarse dentro de CarritoProvider');
+    throw new Error("useCarrito debe ser usado dentro de CarritoProvider");
   }
   return context;
 };
 
 export const CarritoProvider = ({ children }) => {
+  // Estado inicial null para diferenciar "cargando" de "vacío"
   const [carrito, setCarrito] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [cantidadTotal, setCantidadTotal] = useState(0);
+  const [error, setError] = useState(null);
 
-  // Cargar carrito al iniciar si está autenticado
+  // Cargar carrito inicial si hay sesión
   useEffect(() => {
     if (authService.isAuthenticated()) {
       cargarCarrito();
     }
   }, []);
 
-  // Calcular cantidad total de items
-  useEffect(() => {
-    if (carrito?.items) {
-      const total = carrito.items.reduce((sum, item) => sum + item.cantidad, 0);
-      setCantidadTotal(total);
-    } else {
-      setCantidadTotal(0);
-    }
-  }, [carrito]);
-
   const cargarCarrito = async () => {
     try {
       setLoading(true);
-      const data = await carritoService.getCarrito();
-      setCarrito(data);
-    } catch (error) {
-      console.error('Error cargando carrito:', error);
+      const carritoData = await carritoService.obtenerCarrito();
+      // Guardamos todo el objeto { id, items: [], total: 0 }
+      setCarrito(carritoData);
+      setError(null);
+    } catch (err) {
+      console.error("Error al cargar carrito:", err);
+      setError("Error al cargar el carrito");
+      // Si falla, dejamos el carrito como null o estructura vacía segura
+      setCarrito({ items: [], total: 0 });
     } finally {
       setLoading(false);
     }
   };
 
   const agregarProducto = async (productoId, cantidad = 1) => {
+    if (!authService.isAuthenticated()) {
+      throw new Error("Debes iniciar sesión para agregar productos al carrito");
+    }
     try {
       setLoading(true);
-      const data = await carritoService.agregarProducto(productoId, cantidad);
-      setCarrito(data);
-      return data;
-    } catch (error) {
-      console.error('Error agregando producto:', error);
-      throw error;
+      // El servicio debe devolver el carrito actualizado completo
+      const carritoActualizado = await carritoService.agregarProducto(
+        productoId,
+        cantidad
+      );
+      setCarrito(carritoActualizado);
+      setError(null);
+      return carritoActualizado;
+    } catch (err) {
+      console.error("Error al agregar producto:", err);
+      setError(err.message || "Error al agregar producto al carrito");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -63,11 +68,15 @@ export const CarritoProvider = ({ children }) => {
   const actualizarCantidad = async (itemId, cantidad) => {
     try {
       setLoading(true);
-      const data = await carritoService.actualizarCantidad(itemId, cantidad);
-      setCarrito(data);
-    } catch (error) {
-      console.error('Error actualizando cantidad:', error);
-      throw error;
+      const carritoActualizado = await carritoService.actualizarCantidad(
+        itemId,
+        cantidad
+      );
+      setCarrito(carritoActualizado);
+    } catch (err) {
+      console.error("Error al actualizar cantidad:", err);
+      setError("Error al actualizar la cantidad");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -76,11 +85,12 @@ export const CarritoProvider = ({ children }) => {
   const eliminarItem = async (itemId) => {
     try {
       setLoading(true);
-      const data = await carritoService.eliminarItem(itemId);
-      setCarrito(data);
-    } catch (error) {
-      console.error('Error eliminando item:', error);
-      throw error;
+      const carritoActualizado = await carritoService.eliminarItem(itemId);
+      setCarrito(carritoActualizado);
+    } catch (err) {
+      console.error("Error al eliminar item:", err);
+      setError("Error al eliminar el producto");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -90,29 +100,49 @@ export const CarritoProvider = ({ children }) => {
     try {
       setLoading(true);
       await carritoService.vaciarCarrito();
-      setCarrito(null);
-    } catch (error) {
-      console.error('Error vaciando carrito:', error);
-      throw error;
+      // Reseteamos a estructura vacía
+      setCarrito({ items: [], total: 0 });
+    } catch (err) {
+      console.error("Error al vaciar carrito:", err);
+      setError("Error al vaciar el carrito");
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
+  // Función para limpiar el estado al cerrar sesión (sin llamar al backend)
+  const limpiarCarritoContexto = () => {
+    setCarrito(null);
+  };
+
+  const calcularTotal = () => {
+    return carrito?.total || 0;
+  };
+
+  const obtenerCantidadTotal = () => {
+    if (!carrito || !Array.isArray(carrito.items)) return 0;
+    return carrito.items.reduce(
+      (total, item) => total + (item.cantidad || 0),
+      0
+    );
+  };
+
   const value = {
     carrito,
     loading,
-    cantidadTotal,
-    cargarCarrito,
+    error,
     agregarProducto,
     actualizarCantidad,
     eliminarItem,
-    vaciarCarrito
+    vaciarCarrito,
+    cargarCarrito,
+    calcularTotal,
+    obtenerCantidadTotal,
+    limpiarCarritoContexto, // ✅ Importante para el logout
   };
 
   return (
-    <CarritoContext.Provider value={value}>
-      {children}
-    </CarritoContext.Provider>
+    <CarritoContext.Provider value={value}>{children}</CarritoContext.Provider>
   );
 };

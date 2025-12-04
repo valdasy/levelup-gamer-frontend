@@ -8,6 +8,19 @@ services:
     ports:
       - "3000:80"
     depends_on:
+      - gateway  # El frontend ahora depende del Gateway, no directo del backend
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  # 5. API GATEWAY (El nuevo Portero)
+  gateway:
+    build: ../levelup-gamer-gateway
+    image: levelup-gateway:latest
+    ports:
+      - "8080:8080"
+    depends_on:
       - backend
     deploy:
       replicas: 1
@@ -16,17 +29,15 @@ services:
 
   # 2. BACKEND (Tu Spring Boot App)
   backend:
-    # IMPORTANTE: Asegúrate de que esta ruta apunte a tu carpeta del backend
     build: ../levelup-gamer-backend
     image: levelup-backend:latest
     ports:
-      - "8081:8081" # Exponemos el 8081 para que el Frontend pueda entrar
+      - "8081:8081" # Lo dejamos expuesto por si necesitas debuggear, pero el tráfico real irá por el 8080
     environment:
-      # Sobrescribimos la configuración de 'localhost' para usar los nombres de Docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://database:3306/levelup_gamer_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root  # Coincide con la password de abajo
-      - SPRING_RABBITMQ_HOST=rabbitmq    # Conecta con el servicio de abajo
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_RABBITMQ_HOST=rabbitmq
     depends_on:
       - database
       - rabbitmq
@@ -42,9 +53,9 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: levelup_db
     ports:
-      - "3308:3306" # Opcional: Para ver la BD desde Workbench en tu PC
+      - "3308:3306"
     volumes:
-      - db_data:/var/lib/mysql # Guarda los datos aunque apagues Docker
+      - db_data:/var/lib/mysql
     deploy:
       replicas: 1
 
@@ -52,11 +63,10 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"   # Puerto de mensajería (Backend -> RabbitMQ)
-      - "15672:15672" # Panel visual (Tu Navegador -> RabbitMQ)
+      - "5672:5672"
+      - "15672:15672"
     deploy:
       replicas: 1
 
-# Volúmenes para persistencia de datos
 volumes:
   db_data:

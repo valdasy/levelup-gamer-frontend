@@ -1,0 +1,25 @@
+services:
+  frontend:
+    build: .
+    image: mi-frontend-gamer:v1
+    ports:
+      - "80:80"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: levelup_db
+    deploy:
+      replicas: 1
+
+  # Aquí está RabbitMQ correctamente indentado (pertenece a 'services')
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # Puerto para comunicación de mensajes
+      - "15672:15672" # Puerto para el panel visual web
